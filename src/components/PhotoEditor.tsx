@@ -15,7 +15,6 @@ import {
   Image as ImageIcon,
   Loader2,
   ChevronDown,
-  Check,
 } from "lucide-react";
 import { EXAM_PRESETS, ExamPreset } from "@/lib/exam-presets";
 import "react-image-crop/dist/ReactCrop.css";
@@ -164,7 +163,6 @@ export default function PhotoEditor() {
   const [processing, setProcessing] = useState(false);
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [showDate, setShowDate] = useState(false);
   const [dateValue, setDateValue] = useState(() => formatDisplayDate(new Date()));
   const [nameOnPhoto, setNameOnPhoto] = useState("");
@@ -179,7 +177,6 @@ export default function PhotoEditor() {
   const selectedExamCategory = selectedExam.category;
 
   const imgRef = useRef<HTMLImageElement | null>(null);
-  const dropdownRef = useRef<HTMLDivElement | null>(null);
 
   const signatureAvailable =
     selectedExam.category === "exam" &&
@@ -244,7 +241,6 @@ export default function PhotoEditor() {
     setCompletedCrop(undefined);
     setDownloadUrl(null);
     setError(null);
-    setIsDropdownOpen(false);
   };
 
   const handleModeChange = (nextMode: "photo" | "signature") => {
@@ -262,18 +258,6 @@ export default function PhotoEditor() {
       if (downloadUrl) URL.revokeObjectURL(downloadUrl);
     };
   }, [downloadUrl]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (!dropdownRef.current) return;
-      if (!dropdownRef.current.contains(event.target as Node)) {
-        setIsDropdownOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   useEffect(() => {
     if (mode === "signature" && !signatureAvailable) {
@@ -294,7 +278,6 @@ export default function PhotoEditor() {
     setCompletedCrop(undefined);
     setDownloadUrl(null);
     setError(null);
-    setIsDropdownOpen(false);
   }, [category, filteredPresets, selectedExamCategory]);
 
   useEffect(() => {
@@ -641,56 +624,32 @@ export default function PhotoEditor() {
         </div>
       </div>
 
-      <div className="space-y-2 relative" ref={dropdownRef}>
-        <label className="text-sm font-medium text-white">Preset</label>
-        <button
-          type="button"
-          aria-label="Toggle exam presets"
-          aria-expanded={isDropdownOpen}
-          onClick={() => setIsDropdownOpen((prev) => !prev)}
-          className="flex w-full items-center justify-between rounded-lg border border-slate-600 bg-slate-800 px-4 py-3.5 text-left text-white shadow-inner shadow-black/20 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <div>
-            <p className="text-sm font-semibold text-white">{selectedExam.name}</p>
-            <span className="text-xs text-slate-400">
-              {isSignatureMode ? "Signature" : "Photo"} · {activeWidth}x{activeHeight}px · {activeMinKB}-{activeMaxKB} KB
-            </span>
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-white" htmlFor="preset-select">
+          Preset
+        </label>
+        <div className="relative w-full">
+          <select
+            id="preset-select"
+            value={selectedExam.id}
+            onChange={(event) => handleExamChange(event.target.value)}
+            className="absolute inset-0 h-full w-full cursor-pointer opacity-0 z-10 appearance-none"
+          >
+            {filteredPresets.map((preset: ExamPreset) => (
+              <option key={preset.id} value={preset.id}>
+                {preset.name} ({preset.width}x{preset.height}px)
+              </option>
+            ))}
+          </select>
+          <div className="pointer-events-none flex items-center justify-between rounded-xl bg-slate-900 border border-blue-500/30 p-4 text-white shadow-lg shadow-blue-900/20">
+            <div>
+              <p className="text-sm font-semibold">{selectedExam.name}</p>
+              <span className="text-xs text-slate-300">
+                {isSignatureMode ? "Signature" : "Photo"} · {activeWidth}x{activeHeight}px · {activeMinKB}-{activeMaxKB} KB
+              </span>
+            </div>
+            <ChevronDown className="h-5 w-5 text-slate-200" />
           </div>
-          <ChevronDown
-            className={`h-4 w-4 text-slate-300 transition-transform duration-300 ${
-              isDropdownOpen ? "rotate-180" : ""
-            }`}
-          />
-        </button>
-
-        <div
-          className={`absolute z-20 mt-2 w-full rounded-xl border border-slate-700 bg-slate-900/90 p-2 shadow-2xl shadow-black/50 backdrop-blur-xl transition-all duration-300 ${
-            isDropdownOpen
-              ? "translate-y-0 opacity-100 pointer-events-auto"
-              : "-translate-y-2 opacity-0 pointer-events-none"
-          }`}
-        >
-          {filteredPresets.map((preset: ExamPreset) => {
-            const isActive = selectedExam.id === preset.id;
-            return (
-              <button
-                key={preset.id}
-                type="button"
-                onClick={() => handleExamChange(preset.id)}
-                className={`flex w-full items-center justify-between rounded-lg px-4 py-3 text-left text-sm text-slate-100 transition hover:bg-blue-600/20 ${
-                  isActive ? "bg-blue-600/10" : ""
-                }`}
-              >
-                <div>
-                  <p className="font-medium text-white">{preset.name}</p>
-                  <p className="text-xs text-slate-400">
-                    {preset.width}x{preset.height}px · {preset.minKB}-{preset.maxKB} KB
-                  </p>
-                </div>
-                {isActive && <Check className="h-4 w-4 text-blue-400" />}
-              </button>
-            );
-          })}
         </div>
       </div>
 
