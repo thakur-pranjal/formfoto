@@ -15,6 +15,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "FormFoto - Free AI Photo Resizer for Government Exams",
   description: "Resize and compress photos for UPSC, SSC, RRB, and IBPS exams. 100% private and free.",
+  openGraph: {
+    title: "FormFoto - Free AI Photo Resizer for Government Exams",
+    description: "Resize and compress photos for UPSC, SSC, RRB, and IBPS exams. 100% private and free.",
+    images: ["/opengraph-image.png"],
+  },
 };
 
 export default function RootLayout({

@@ -648,7 +648,7 @@ export default function PhotoEditor() {
           aria-label="Toggle exam presets"
           aria-expanded={isDropdownOpen}
           onClick={() => setIsDropdownOpen((prev) => !prev)}
-          className="flex w-full items-center justify-between rounded-lg border border-slate-700 bg-slate-900/80 px-4 py-3 text-left text-white shadow-inner shadow-black/20 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="flex w-full items-center justify-between rounded-lg border border-slate-600 bg-slate-800 px-4 py-3.5 text-left text-white shadow-inner shadow-black/20 focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <div>
             <p className="text-sm font-semibold text-white">{selectedExam.name}</p>
@@ -860,7 +860,7 @@ export default function PhotoEditor() {
             <a
               href={downloadUrl}
               download={`${selectedExam.name.replace(/\s+/g, "_")}_${downloadSuffix}.jpg`}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-blue-500/60 bg-slate-900/40 px-5 py-2 text-blue-200 transition hover:border-blue-400 hover:bg-slate-900/70 sm:w-auto"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-blue-500 to-blue-700 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-600/30 transition hover:shadow-[0_0_25px_rgba(59,130,246,0.65)] focus:outline-none focus:ring-2 focus:ring-blue-400 sm:w-auto"
             >
               <Download className="h-4 w-4" />
               Download processed {isSignatureMode ? "signature" : "photo"}
