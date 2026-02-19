@@ -172,11 +172,23 @@ export default function PhotoEditor() {
   const [mode, setMode] = useState<"photo" | "signature">("photo");
   const [isRemovingBg, setIsRemovingBg] = useState(false);
   const [removeBgStage, setRemoveBgStage] = useState<"idle" | "optimizing" | "removing">("idle");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const filteredPresets = useMemo(() => EXAM_PRESETS.filter((preset) => preset.category === category), [category]);
   const selectedExamCategory = selectedExam.category;
 
   const imgRef = useRef<HTMLImageElement | null>(null);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const signatureAvailable =
     selectedExam.category === "exam" &&
@@ -625,59 +637,81 @@ export default function PhotoEditor() {
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium text-white" htmlFor="preset-select">
+        <label className="text-sm font-medium text-white">
           Preset
         </label>
-        <div className="relative w-full">
-          <select
-            id="preset-select"
-            value={selectedExam.id}
-            onChange={(event) => handleExamChange(event.target.value)}
-            className="absolute inset-0 h-full w-full cursor-pointer opacity-0 z-10 appearance-none"
+        <div className="relative w-full" ref={dropdownRef}>
+          {/* Trigger Button */}
+          <div
+            onClick={() => setIsDropdownOpen((prev) => !prev)}
+            className="w-full bg-slate-800 border border-slate-700 hover:border-blue-500 rounded-xl p-4 flex justify-between items-center cursor-pointer transition-all shadow-md text-left"
           >
-            {filteredPresets.map((preset: ExamPreset) => (
-              <option key={preset.id} value={preset.id}>
-                {preset.name} ({preset.width}x{preset.height}px)
-              </option>
-            ))}
-          </select>
-          <div className="pointer-events-none flex items-center justify-between rounded-xl bg-slate-900 border border-blue-500/30 p-4 text-white shadow-lg shadow-blue-900/20">
             <div>
-              <p className="text-sm font-semibold">{selectedExam.name}</p>
-              <span className="text-xs text-slate-300">
-                {isSignatureMode ? "Signature" : "Photo"} · {activeWidth}x{activeHeight}px · {activeMinKB}-{activeMaxKB} KB
+              <p className="text-sm font-bold text-white">{selectedExam.name}</p>
+              <span className="text-xs text-slate-400">
+                {selectedExam.width}x{selectedExam.height}px · {selectedExam.minKB}-{selectedExam.maxKB} KB
               </span>
             </div>
-            <ChevronDown className="h-5 w-5 text-slate-200" />
+            <ChevronDown
+              className={`h-5 w-5 text-slate-400 transition-transform duration-300 ${
+                isDropdownOpen ? "rotate-180" : "rotate-0"
+              }`}
+            />
+          </div>
+
+          {/* Dropdown Menu */}
+          <div
+            className={`absolute left-0 right-0 mt-2 bg-slate-900/80 backdrop-blur-xl border border-slate-700 rounded-xl shadow-2xl overflow-hidden z-50 transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] origin-top ${
+              isDropdownOpen
+                ? "opacity-100 translate-y-0 scale-100 blur-0"
+                : "opacity-0 -translate-y-4 scale-95 blur-sm pointer-events-none"
+            }`}
+          >
+            {filteredPresets.map((preset: ExamPreset) => (
+              <div
+                key={preset.id}
+                onClick={() => {
+                  handleExamChange(preset.id);
+                  setIsDropdownOpen(false);
+                }}
+                className={`p-4 hover:bg-slate-800 cursor-pointer border-b border-slate-800/50 last:border-0 transition-colors duration-150 ${
+                  preset.id === selectedExam.id ? "bg-slate-800/60" : ""
+                }`}
+              >
+                <p className="text-sm font-semibold text-white">{preset.name}</p>
+                <span className="text-xs text-slate-400">
+                  {preset.width}x{preset.height}px · {preset.minKB}-{preset.maxKB} KB
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       </div>
 
       {!isSignatureMode && selectedExam.supportsDate && (
         <div className="rounded-2xl border border-slate-700 bg-slate-900/40 p-4 space-y-4">
-          <label className="flex cursor-pointer items-center justify-between gap-4 select-none">
+          <div className="flex cursor-pointer items-center justify-between gap-4 select-none">
             <div>
               <p className="text-sm font-semibold text-white">Add Date of Photo (For SSC/Govt Exams)</p>
               <p className="text-xs text-slate-400">Toggle on to stamp the shooting date onto your processed photo.</p>
             </div>
-            <span className="relative inline-flex h-7 w-12 items-center">
-              <input
-                type="checkbox"
-                className="peer sr-only"
-                checked={showDate}
-                onChange={(event) => setShowDate(event.target.checked)}
-                aria-label="Toggle date on photo"
-              />
+            <button
+              type="button"
+              role="switch"
+              aria-checked={showDate}
+              onClick={() => setShowDate((prev) => !prev)}
+              className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900 ${
+                showDate ? "bg-blue-500" : "bg-slate-600"
+              }`}
+            >
               <span
                 aria-hidden="true"
-                className="absolute inset-0 rounded-full bg-slate-600 transition-colors duration-300 peer-checked:bg-blue-500 peer-focus-visible:ring-2 peer-focus-visible:ring-blue-500"
+                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                  showDate ? "translate-x-5" : "translate-x-0"
+                }`}
               />
-              <span
-                aria-hidden="true"
-                className="absolute left-1 top-1/2 h-5 w-5 -translate-y-1/2 rounded-full bg-white shadow transition-transform duration-300 peer-checked:translate-x-5"
-              />
-            </span>
-          </label>
+            </button>
+          </div>
 
           {showDate && (
             <div className="space-y-3">
