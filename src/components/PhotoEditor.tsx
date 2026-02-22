@@ -154,8 +154,14 @@ const AIProcessingOverlay = () => (
   </div>
 );
 
-export default function PhotoEditor() {
-  const [category, setCategory] = useState<"exam" | "passport">("exam");
+interface PhotoEditorProps {
+  mode?: "exam" | "passport" | "manual";
+}
+
+export default function PhotoEditor({ mode: pageMode }: PhotoEditorProps = {}) {
+  const [category, setCategory] = useState<"exam" | "passport">(
+    pageMode === "passport" ? "passport" : "exam"
+  );
   const [selectedExam, setSelectedExam] = useState<ExamPreset>(EXAM_PRESETS[0]);
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [crop, setCrop] = useState<PercentCrop>();
@@ -547,44 +553,46 @@ export default function PhotoEditor() {
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6 rounded-3xl border border-slate-700 bg-slate-800/50 p-4 shadow-2xl shadow-black/40 backdrop-blur-xl sm:p-8">
-      <div className="grid gap-3 sm:grid-cols-2" role="group" aria-label="Document category">
-        <button
-          type="button"
-          aria-pressed={isExamCategory}
-          onClick={() => setCategory("exam")}
-          className={`flex items-center gap-3 rounded-2xl border-2 px-4 py-4 text-left text-white transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-400 focus-visible:ring-offset-slate-900 ${
-            isExamCategory
-              ? "border-blue-400 bg-gradient-to-r from-blue-600 to-blue-500 shadow-blue-500/30 shadow-xl"
-              : "border-slate-700 bg-slate-900/40 text-slate-200 hover:border-blue-400/60 hover:bg-slate-900/70"
-          }`}
-        >
-          <span className="text-3xl" aria-hidden>
-            🎓
-          </span>
-          <div>
-            <p className="text-base font-semibold">Exam / Government Form</p>
-            <p className="text-xs text-slate-200">Access preset modes plus signature workflow.</p>
-          </div>
-        </button>
-        <button
-          type="button"
-          aria-pressed={isPassportCategory}
-          onClick={() => setCategory("passport")}
-          className={`flex items-center gap-3 rounded-2xl border-2 px-4 py-4 text-left text-white transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-slate-900 ${
-            isPassportCategory
-              ? "border-emerald-400 bg-gradient-to-r from-emerald-600 to-emerald-500 shadow-emerald-500/30 shadow-xl"
-              : "border-slate-700 bg-slate-900/40 text-slate-200 hover:border-emerald-400/60 hover:bg-slate-900/70"
-          }`}
-        >
-          <span className="text-3xl" aria-hidden>
-            ✈️
-          </span>
-          <div>
-            <p className="text-base font-semibold">Passport / Visa</p>
-            <p className="text-xs text-slate-200">Square passport & visa presets, photo-only.</p>
-          </div>
-        </button>
-      </div>
+      {!pageMode && (
+        <div className="grid gap-3 sm:grid-cols-2" role="group" aria-label="Document category">
+          <button
+            type="button"
+            aria-pressed={isExamCategory}
+            onClick={() => setCategory("exam")}
+            className={`flex items-center gap-3 rounded-2xl border-2 px-4 py-4 text-left text-white transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-400 focus-visible:ring-offset-slate-900 ${
+              isExamCategory
+                ? "border-blue-400 bg-gradient-to-r from-blue-600 to-blue-500 shadow-blue-500/30 shadow-xl"
+                : "border-slate-700 bg-slate-900/40 text-slate-200 hover:border-blue-400/60 hover:bg-slate-900/70"
+            }`}
+          >
+            <span className="text-3xl" aria-hidden>
+              🎓
+            </span>
+            <div>
+              <p className="text-base font-semibold">Exam / Government Form</p>
+              <p className="text-xs text-slate-200">Access preset modes plus signature workflow.</p>
+            </div>
+          </button>
+          <button
+            type="button"
+            aria-pressed={isPassportCategory}
+            onClick={() => setCategory("passport")}
+            className={`flex items-center gap-3 rounded-2xl border-2 px-4 py-4 text-left text-white transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-slate-900 ${
+              isPassportCategory
+                ? "border-emerald-400 bg-gradient-to-r from-emerald-600 to-emerald-500 shadow-emerald-500/30 shadow-xl"
+                : "border-slate-700 bg-slate-900/40 text-slate-200 hover:border-emerald-400/60 hover:bg-slate-900/70"
+            }`}
+          >
+            <span className="text-3xl" aria-hidden>
+              ✈️
+            </span>
+            <div>
+              <p className="text-base font-semibold">Passport / Visa</p>
+              <p className="text-xs text-slate-200">Square passport & visa presets, photo-only.</p>
+            </div>
+          </button>
+        </div>
+      )}
 
       {isExamCategory && (
         <div
