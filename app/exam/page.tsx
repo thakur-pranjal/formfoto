@@ -51,7 +51,7 @@ export default function ExamPage() {
         </header>
 
         {/* ── Editor ── */}
-        <section>
+        <section className="relative z-10">
           <PhotoEditor mode="exam" />
         </section>
 

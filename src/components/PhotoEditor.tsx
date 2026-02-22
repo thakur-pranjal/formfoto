@@ -648,7 +648,7 @@ export default function PhotoEditor({ mode: pageMode }: PhotoEditorProps = {}) {
         <label className="text-sm font-medium text-white">
           Preset
         </label>
-        <div className="relative w-full" ref={dropdownRef}>
+        <div className="relative z-40 w-full" ref={dropdownRef}>
           {/* Trigger Button */}
           <div
             onClick={() => setIsDropdownOpen((prev) => !prev)}

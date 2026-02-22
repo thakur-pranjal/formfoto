@@ -53,7 +53,7 @@ export default function PassportPage() {
         </header>
 
         {/* ── Editor ── */}
-        <section>
+        <section className="relative z-10">
           <PhotoEditor mode="passport" />
         </section>
 
