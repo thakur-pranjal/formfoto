@@ -155,7 +155,7 @@ const AIProcessingOverlay = () => (
 );
 
 interface PhotoEditorProps {
-  mode?: "exam" | "passport" | "manual";
+  mode?: "exam" | "passport";
 }
 
 export default function PhotoEditor({ mode: pageMode }: PhotoEditorProps = {}) {
@@ -210,9 +210,7 @@ export default function PhotoEditor({ mode: pageMode }: PhotoEditorProps = {}) {
   const activeHeight = isSignatureMode ? selectedExam.sigHeight! : selectedExam.height;
   const activeMinKB = isSignatureMode ? selectedExam.sigMinKB! : selectedExam.minKB;
   const activeMaxKB = isSignatureMode ? selectedExam.sigMaxKB! : selectedExam.maxKB;
-  const activeAspectRatio = isSignatureMode
-    ? selectedExam.sigAspectRatio!
-    : selectedExam.aspectRatio;
+  const activeAspectRatio = isSignatureMode ? selectedExam.sigAspectRatio! : selectedExam.aspectRatio;
   const downloadSuffix = isSignatureMode ? "Signature" : "FormFoto";
   const aspectDisplay = Number.isFinite(activeAspectRatio)
     ? activeAspectRatio.toFixed(3)
@@ -640,7 +638,9 @@ export default function PhotoEditor({ mode: pageMode }: PhotoEditorProps = {}) {
         </div>
         <div className="flex items-center gap-2 text-slate-300">
           <ImageIcon className="h-5 w-5 text-cyan-300" />
-          <span className="text-sm font-medium text-white">{selectedExam.name}</span>
+          <span className="text-sm font-medium text-white">
+            {selectedExam.name}
+          </span>
         </div>
       </div>
 
