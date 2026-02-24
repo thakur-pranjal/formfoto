@@ -168,6 +168,8 @@ export default function ManualEditor() {
   >("idle");
   // true when the user's target KB exceeds what quality:1.0 can physically produce
   const [estimateCapped, setEstimateCapped] = useState(false);
+  // Output format toggle
+  const [outputFormat, setOutputFormat] = useState<"image/jpeg" | "image/png">("image/jpeg");
 
   const imgRef = useRef<HTMLImageElement | null>(null);
 
@@ -372,17 +374,28 @@ export default function ManualEditor() {
       const canvas = renderCanvas();
       if (!canvas) throw new Error("Unable to prepare canvas.");
 
-      const { quality: resolvedQuality, sizeKb, cappedAtMax } = await findQualityForKB(
-        canvas,
-        targetKb
-      );
+      let blob: Blob | null = null;
+      let sizeKb = 0;
 
-      const blob: Blob | null = await new Promise((resolve) =>
-        canvas.toBlob((b) => resolve(b), "image/jpeg", resolvedQuality)
-      );
+      if (outputFormat === "image/png") {
+        // PNG is lossless — single pass, no binary search
+        blob = await new Promise<Blob | null>((resolve) =>
+          canvas.toBlob((b) => resolve(b), "image/png")
+        );
+        sizeKb = blob ? Math.max(1, Math.round(blob.size / 1024)) : 0;
+        setEstimateCapped(false);
+      } else {
+        const { quality: resolvedQuality, sizeKb: jpegKb, cappedAtMax } =
+          await findQualityForKB(canvas, targetKb);
+        blob = await new Promise<Blob | null>((resolve) =>
+          canvas.toBlob((b) => resolve(b), "image/jpeg", resolvedQuality)
+        );
+        sizeKb = jpegKb;
+        setEstimateCapped(cappedAtMax);
+      }
+
       if (!blob) throw new Error("Unable to generate image blob.");
 
-      setEstimateCapped(cappedAtMax);
       setEstimatedFileSize(`≈${sizeKb} KB`);
       const url = URL.createObjectURL(blob);
       setDownloadUrl(url);
@@ -412,10 +425,21 @@ export default function ManualEditor() {
         return;
       }
       try {
-        const { sizeKb, cappedAtMax } = await findQualityForKB(canvas, targetKb);
-        if (!cancelled) {
-          setEstimateCapped(cappedAtMax);
-          setEstimatedFileSize(`≈${sizeKb} KB`);
+        if (outputFormat === "image/png") {
+          const blob = await new Promise<Blob | null>((resolve) =>
+            canvas.toBlob((b) => resolve(b), "image/png")
+          );
+          const sizeKb = blob ? Math.max(1, Math.round(blob.size / 1024)) : 0;
+          if (!cancelled) {
+            setEstimateCapped(false);
+            setEstimatedFileSize(`≈${sizeKb} KB`);
+          }
+        } else {
+          const { sizeKb, cappedAtMax } = await findQualityForKB(canvas, targetKb);
+          if (!cancelled) {
+            setEstimateCapped(cappedAtMax);
+            setEstimatedFileSize(`≈${sizeKb} KB`);
+          }
         }
       } catch {
         if (!cancelled) {
@@ -429,7 +453,7 @@ export default function ManualEditor() {
       cancelled = true;
       window.clearTimeout(handle);
     };
-  }, [completedCrop, findQualityForKB, imageSrc, renderCanvas, targetKb]);
+  }, [completedCrop, findQualityForKB, imageSrc, outputFormat, renderCanvas, targetKb]);
 
   // ---------------------------------------------------------------------------
   // Render
@@ -451,6 +475,35 @@ export default function ManualEditor() {
           <span className="text-sm font-medium text-white">
             Custom ({targetWidth}&times;{targetHeight}px · {targetKb}&nbsp;KB)
           </span>
+        </div>
+      </div>
+
+      {/* ── Output Format Toggle ── */}
+      <div className="flex items-center gap-3">
+        <span className="text-xs font-medium text-slate-300 uppercase tracking-wider">Format</span>
+        <div className="flex overflow-hidden rounded-lg border border-slate-600">
+          <button
+            type="button"
+            onClick={() => setOutputFormat("image/jpeg")}
+            className={`px-4 py-1.5 text-sm font-medium transition-colors ${
+              outputFormat === "image/jpeg"
+                ? "bg-blue-600 text-white"
+                : "bg-slate-900/70 text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            JPG
+          </button>
+          <button
+            type="button"
+            onClick={() => setOutputFormat("image/png")}
+            className={`px-4 py-1.5 text-sm font-medium transition-colors ${
+              outputFormat === "image/png"
+                ? "bg-blue-600 text-white"
+                : "bg-slate-900/70 text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            PNG
+          </button>
         </div>
       </div>
 
@@ -500,7 +553,9 @@ export default function ManualEditor() {
         <div className="flex flex-col gap-1.5">
           <label
             htmlFor="manual-kb"
-            className="text-xs font-medium text-slate-300 uppercase tracking-wider"
+            className={`text-xs font-medium uppercase tracking-wider ${
+              outputFormat === "image/png" ? "text-slate-500" : "text-slate-300"
+            }`}
           >
             Max File Size (KB)
           </label>
@@ -509,11 +564,21 @@ export default function ManualEditor() {
             type="number"
             min={1}
             value={targetKb}
+            disabled={outputFormat === "image/png"}
             onChange={(e) =>
               setTargetKb(Math.max(1, Math.floor(Number(e.target.value))))
             }
-            className="bg-slate-900/70 border border-slate-600 hover:border-blue-500 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            className={`bg-slate-900/70 border rounded-xl px-3 py-2.5 text-sm transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+              outputFormat === "image/png"
+                ? "border-slate-700 text-slate-600 cursor-not-allowed opacity-50"
+                : "border-slate-600 hover:border-blue-500 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            }`}
           />
+          {outputFormat === "image/png" && (
+            <p className="text-xs text-amber-400/80 leading-tight">
+              PNGs are lossless (file size cannot be compressed)
+            </p>
+          )}
         </div>
       </div>
 
@@ -646,7 +711,7 @@ export default function ManualEditor() {
           {downloadUrl && (
             <a
               href={downloadUrl}
-              download={`ManualEditor_${targetWidth}x${targetHeight}.jpg`}
+              download={`ManualEditor_${targetWidth}x${targetHeight}.${outputFormat === "image/png" ? "png" : "jpg"}`}
               className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-blue-500 to-blue-700 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-600/30 transition hover:shadow-[0_0_25px_rgba(59,130,246,0.65)] focus:outline-none focus:ring-2 focus:ring-blue-400 sm:w-auto"
             >
               <Download className="h-4 w-4" />
