@@ -1,96 +1,145 @@
-import type { Metadata } from "next";
-import PhotoEditor from "@/components/PhotoEditor";
+"use client";
 
-export const metadata: Metadata = {
-  title: "Government Exam Photo & Signature Resizer | UPSC, SSC, IBPS, JEE, NEET",
-  description:
-    "Free online tool to resize and compress photos and signatures for Indian government exams — UPSC, SSC CGL, IBPS, JEE, NEET, and more. Set exact KB size and pixel dimensions instantly, 100% client-side.",
-  openGraph: {
-    title: "Government Exam Photo Resizer",
-    description:
-      "Compress and resize exam photos and signatures to official specifications. Works entirely in your browser — nothing is uploaded.",
-    type: "website",
-  },
-};
+import { useState, useMemo } from "react";
+import Link from "next/link";
+import { Search, ChevronRight } from "lucide-react";
+import { FORMATS } from "@/config/formats";
+
+const POPULAR_SLUGS = ["upsc", "neet", "ssc"];
+
+const ALL_EXAMS = Object.entries(FORMATS)
+  .filter(([, f]) => f.category === "exam")
+  .map(([slug, f]) => ({ ...f, slug }))
+  .sort((a, b) => a.title.localeCompare(b.title));
 
 export default function ExamPage() {
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredExams = useMemo(() => {
+    if (!searchQuery.trim()) return ALL_EXAMS;
+    const q = searchQuery.toLowerCase();
+    return ALL_EXAMS.filter(
+      (f) =>
+        f.title.toLowerCase().includes(q) ||
+        f.slug.toLowerCase().includes(q),
+    );
+  }, [searchQuery]);
+
+  const popularExams = ALL_EXAMS.filter((f) => POPULAR_SLUGS.includes(f.slug));
+
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 px-4 py-16 text-white sm:px-6 sm:py-24">
-      <div className="mx-auto max-w-5xl space-y-14">
-        {/* ── Header ── */}
-        <header className="space-y-5 text-center">
+      <div className="mx-auto max-w-6xl space-y-16">
+
+        {/* ── Hero ── */}
+        <header className="space-y-6 text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-500/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-blue-300">
             <span aria-hidden>🎓</span> Exam Edition
           </div>
 
           <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
-            <span className="bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent">
-              Exam Photo &amp; Signature
+            <span className="bg-gradient-to-r from-blue-400 via-cyan-300 to-indigo-400 bg-clip-text text-transparent">
+              Government Exam
             </span>
             <br />
-            <span className="text-white">Resizer</span>
+            <span className="text-white">Photo Tools</span>
           </h1>
 
           <p className="mx-auto max-w-2xl text-base leading-relaxed text-slate-400 sm:text-lg">
-            Upload your photo or signature. Crop to the official frame, set the
-            exact kilobyte target, and download — entirely in your browser with
-            zero server uploads.
+            Pick your exam below. Instantly resize, crop, and compress your photo or
+            signature to exact official specifications — 100% in your browser.
           </p>
 
-          {/* Exam badges */}
-          <div className="flex flex-wrap justify-center gap-2 pt-1">
-            {["UPSC", "SSC CGL", "IBPS PO", "JEE", "NEET", "RRB NTPC"].map((exam) => (
-              <span
-                key={exam}
-                className="rounded-full border border-slate-700 bg-slate-800/60 px-3 py-1 text-xs font-medium text-slate-300"
-              >
-                {exam}
-              </span>
-            ))}
+          {/* Search bar */}
+          <div className="mx-auto mt-8 max-w-xl">
+            <div className="relative flex items-center">
+              <Search className="pointer-events-none absolute left-4 h-5 w-5 text-slate-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search exams — UPSC, NEET, SSC…"
+                className="w-full rounded-2xl border border-slate-700 bg-slate-800/70 py-4 pl-12 pr-5 text-base text-white placeholder-slate-500 shadow-xl backdrop-blur-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
+              />
+            </div>
           </div>
         </header>
 
-        {/* ── Editor ── */}
-        <section className="relative z-10">
-          <PhotoEditor mode="exam" />
+        {/* ── Popular Section ── */}
+        {!searchQuery.trim() && popularExams.length > 0 && (
+          <section className="space-y-5">
+            <h2 className="text-lg font-bold tracking-wide text-slate-200">
+              🔥 Most Popular
+            </h2>
+            <div className="grid gap-4 sm:grid-cols-3">
+              {popularExams.map((exam) => (
+                <Link
+                  key={exam.slug}
+                  href={`/exam/${exam.slug}`}
+                  className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-blue-500/30 bg-gradient-to-br from-blue-900/40 to-indigo-900/30 p-5 shadow-lg backdrop-blur-sm transition-all duration-200 hover:-translate-y-1 hover:border-blue-400/60 hover:shadow-xl hover:shadow-blue-500/20"
+                >
+                  <div className="space-y-1.5">
+                    <span className="inline-block rounded-full bg-blue-500/20 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-blue-300">
+                      Popular
+                    </span>
+                    <h3 className="text-base font-bold leading-snug text-white transition-colors group-hover:text-blue-300">
+                      {exam.title}
+                    </h3>
+                    <p className="text-xs text-slate-400">
+                      {exam.documents.map((d) => d.name).join(" • ")}
+                    </p>
+                  </div>
+                  <div className="mt-4 flex items-center gap-1 text-xs font-semibold text-blue-400">
+                    Open Tool
+                    <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* ── All Exams Grid ── */}
+        <section className="space-y-5">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold tracking-wide text-slate-200">
+              All Exams (A–Z)
+            </h2>
+            <span className="text-sm text-slate-500">
+              {filteredExams.length} result{filteredExams.length !== 1 ? "s" : ""}
+            </span>
+          </div>
+
+          {filteredExams.length === 0 ? (
+            <div className="rounded-2xl border border-slate-700/50 bg-slate-800/30 py-16 text-center text-slate-400">
+              <Search className="mx-auto mb-3 h-8 w-8 opacity-40" />
+              <p className="text-sm">
+                No exams found for &ldquo;{searchQuery}&rdquo;
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {filteredExams.map((exam) => (
+                <Link
+                  key={exam.slug}
+                  href={`/exam/${exam.slug}`}
+                  className="group flex items-center justify-between gap-4 rounded-2xl border border-slate-700/60 bg-slate-800/40 p-5 backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-600 hover:bg-slate-800/70 hover:shadow-lg hover:shadow-black/20"
+                >
+                  <div className="min-w-0 space-y-1">
+                    <h3 className="truncate text-sm font-semibold text-white transition-colors group-hover:text-blue-300">
+                      {exam.title}
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      {exam.documents.map((d) => d.name).join(" • ")}
+                    </p>
+                  </div>
+                  <ChevronRight className="h-4 w-4 shrink-0 text-slate-600 transition-all group-hover:translate-x-0.5 group-hover:text-blue-400" />
+                </Link>
+              ))}
+            </div>
+          )}
         </section>
 
-        {/* ── How it works ── */}
-        <section className="grid gap-6 sm:grid-cols-3">
-          {[
-            {
-              step: "1",
-              title: "Choose a preset",
-              body: "Pick your exam from the dropdown — dimensions and KB limits are pre-loaded.",
-              color: "blue",
-            },
-            {
-              step: "2",
-              title: "Upload & crop",
-              body: "Drag your photo or signature. The aspect ratio locks automatically.",
-              color: "cyan",
-            },
-            {
-              step: "3",
-              title: "Process & download",
-              body: "Hit Process. We binary-search the ideal JPEG quality to hit your KB target.",
-              color: "indigo",
-            },
-          ].map(({ step, title, body, color }) => (
-            <div
-              key={step}
-              className="rounded-2xl border border-slate-700/60 bg-slate-800/40 p-6 backdrop-blur-sm"
-            >
-              <div
-                className={`mb-4 flex h-9 w-9 items-center justify-center rounded-xl bg-${color}-500/20 text-sm font-bold text-${color}-300`}
-              >
-                {step}
-              </div>
-              <h3 className="mb-1 font-semibold text-white">{title}</h3>
-              <p className="text-sm text-slate-400">{body}</p>
-            </div>
-          ))}
-        </section>
       </div>
     </main>
   );

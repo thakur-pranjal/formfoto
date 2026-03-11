@@ -146,11 +146,17 @@ const AIProcessingOverlay = () => (
 // Component
 // ---------------------------------------------------------------------------
 
-export default function ManualEditor() {
+interface PresetConfig {
+  width: number;
+  height: number;
+  maxKb: number;
+}
+
+export default function ManualEditor({ presetConfig }: { presetConfig?: PresetConfig }) {
   // Dimension & size state — user's typed value is absolute law
-  const [targetWidth, setTargetWidth] = useState(500);
-  const [targetHeight, setTargetHeight] = useState(500);
-  const [targetKb, setTargetKb] = useState(100);
+  const [targetWidth, setTargetWidth] = useState(presetConfig?.width ?? 500);
+  const [targetHeight, setTargetHeight] = useState(presetConfig?.height ?? 500);
+  const [targetKb, setTargetKb] = useState(presetConfig?.maxKb ?? 100);
 
   // Image pipeline state
   const [imageSrc, setImageSrc] = useState<string | null>(null);
@@ -508,6 +514,13 @@ export default function ManualEditor() {
       </div>
 
       {/* ── Dimension & size controls ── */}
+      {presetConfig && (
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-400">
+            🔒 Preset Locked — {presetConfig.width}×{presetConfig.height}px · {presetConfig.maxKb}KB max
+          </span>
+        </div>
+      )}
       <div className="grid grid-cols-3 gap-3">
         {/* Width */}
         <div className="flex flex-col gap-1.5">
@@ -522,10 +535,15 @@ export default function ManualEditor() {
             type="number"
             min={1}
             value={targetWidth}
+            disabled={!!presetConfig}
             onChange={(e) =>
               setTargetWidth(Math.max(1, Math.floor(Number(e.target.value))))
             }
-            className="bg-slate-900/70 border border-slate-600 hover:border-blue-500 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            className={`bg-slate-900/70 border rounded-xl px-3 py-2.5 text-sm transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+              presetConfig
+                ? "border-emerald-700/50 text-emerald-300 cursor-not-allowed opacity-70"
+                : "border-slate-600 hover:border-blue-500 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            }`}
           />
         </div>
 
@@ -542,10 +560,15 @@ export default function ManualEditor() {
             type="number"
             min={1}
             value={targetHeight}
+            disabled={!!presetConfig}
             onChange={(e) =>
               setTargetHeight(Math.max(1, Math.floor(Number(e.target.value))))
             }
-            className="bg-slate-900/70 border border-slate-600 hover:border-blue-500 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            className={`bg-slate-900/70 border rounded-xl px-3 py-2.5 text-sm transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+              presetConfig
+                ? "border-emerald-700/50 text-emerald-300 cursor-not-allowed opacity-70"
+                : "border-slate-600 hover:border-blue-500 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            }`}
           />
         </div>
 
@@ -554,7 +577,7 @@ export default function ManualEditor() {
           <label
             htmlFor="manual-kb"
             className={`text-xs font-medium uppercase tracking-wider ${
-              outputFormat === "image/png" ? "text-slate-500" : "text-slate-300"
+              outputFormat === "image/png" || presetConfig ? "text-slate-500" : "text-slate-300"
             }`}
           >
             Max File Size (KB)
@@ -564,17 +587,19 @@ export default function ManualEditor() {
             type="number"
             min={1}
             value={targetKb}
-            disabled={outputFormat === "image/png"}
+            disabled={outputFormat === "image/png" || !!presetConfig}
             onChange={(e) =>
               setTargetKb(Math.max(1, Math.floor(Number(e.target.value))))
             }
             className={`bg-slate-900/70 border rounded-xl px-3 py-2.5 text-sm transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
-              outputFormat === "image/png"
+              presetConfig
+                ? "border-emerald-700/50 text-emerald-300 cursor-not-allowed opacity-70"
+                : outputFormat === "image/png"
                 ? "border-slate-700 text-slate-600 cursor-not-allowed opacity-50"
                 : "border-slate-600 hover:border-blue-500 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             }`}
           />
-          {outputFormat === "image/png" && (
+          {outputFormat === "image/png" && !presetConfig && (
             <p className="text-xs text-amber-400/80 leading-tight">
               PNGs are lossless (file size cannot be compressed)
             </p>
