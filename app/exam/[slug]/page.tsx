@@ -15,7 +15,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const format = FORMATS[slug];
+  const format = FORMATS.find((f) => f.id === slug);
 
   if (!format) {
     return {};
