@@ -10,7 +10,7 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({
-  params,
+  params,  
 }: {
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
