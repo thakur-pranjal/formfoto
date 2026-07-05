@@ -4,9 +4,9 @@ import { FORMATS } from '../../../src/config/formats';
 import SmartEditor from '../../../src/components/SmartEditor';
 
 export async function generateStaticParams() {
-  return Object.entries(FORMATS)
-    .filter(([, format]) => format.category === 'exam')
-    .map(([key]) => ({ slug: key }));
+  return FORMATS
+    .filter((format) => format.category === 'exam')
+    .map((format) => ({ slug: format.id }));
 }
 
 export async function generateMetadata({

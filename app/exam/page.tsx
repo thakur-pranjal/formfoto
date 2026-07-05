@@ -7,9 +7,8 @@ import { FORMATS } from "@/config/formats";
 
 const POPULAR_SLUGS = ["upsc", "neet", "ssc"];
 
-const ALL_EXAMS = Object.entries(FORMATS)
-  .filter(([, f]) => f.category === "exam")
-  .map(([slug, f]) => ({ ...f, slug }))
+const ALL_EXAMS = FORMATS
+  .filter((format) => format.category === "exam")
   .sort((a, b) => a.title.localeCompare(b.title));
 
 export default function ExamPage() {
@@ -21,11 +20,11 @@ export default function ExamPage() {
     return ALL_EXAMS.filter(
       (f) =>
         f.title.toLowerCase().includes(q) ||
-        f.slug.toLowerCase().includes(q),
+        f.id.toLowerCase().includes(q),
     );
   }, [searchQuery]);
 
-  const popularExams = ALL_EXAMS.filter((f) => POPULAR_SLUGS.includes(f.slug));
+  const popularExams = ALL_EXAMS.filter((f) => POPULAR_SLUGS.includes(f.id));
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 px-4 py-16 text-white sm:px-6 sm:py-24">
@@ -74,8 +73,8 @@ export default function ExamPage() {
             <div className="grid gap-4 sm:grid-cols-3">
               {popularExams.map((exam) => (
                 <Link
-                  key={exam.slug}
-                  href={`/exam/${exam.slug}`}
+                  key={exam.id}
+                  href={`/exam/${exam.id}`}
                   className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-blue-500/30 bg-gradient-to-br from-blue-900/40 to-indigo-900/30 p-5 shadow-lg backdrop-blur-sm transition-all duration-200 hover:-translate-y-1 hover:border-blue-400/60 hover:shadow-xl hover:shadow-blue-500/20"
                 >
                   <div className="space-y-1.5">
@@ -121,8 +120,8 @@ export default function ExamPage() {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {filteredExams.map((exam) => (
                 <Link
-                  key={exam.slug}
-                  href={`/exam/${exam.slug}`}
+                  key={exam.id}
+                  href={`/exam/${exam.id}`}
                   className="group flex items-center justify-between gap-4 rounded-2xl border border-slate-700/60 bg-slate-800/40 p-5 backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-600 hover:bg-slate-800/70 hover:shadow-lg hover:shadow-black/20"
                 >
                   <div className="min-w-0 space-y-1">

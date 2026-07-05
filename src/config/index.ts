@@ -6,6 +6,9 @@ import { ap_eapcetConfig } from './exams/ap_eapcet';
 import { bitsatConfig } from './exams/bitsat';
 import { comedk_ugetConfig } from './exams/comedk_uget';
 import { gujcetConfig } from './exams/gujcet';
+import { ibps_clerkConfig } from './exams/ibps_clerk';
+import { ibps_poConfig } from './exams/ibps_po';
+import { ibps_rrbConfig } from './exams/ibps_rrb';
 import { ini_cetConfig } from './exams/ini_cet';
 import { jee_advancedConfig } from './exams/jee_advanced';
 import { jee_mainConfig } from './exams/jee_main';
@@ -16,6 +19,10 @@ import { mht_cetConfig } from './exams/mht_cet';
 import { neet_pgConfig } from './exams/neet_pg';
 import { neet_ugConfig } from './exams/neet_ug';
 import { ojeeConfig } from './exams/ojee';
+import { rbi_assistantConfig } from './exams/rbi_assistant';
+import { rbi_grade_bConfig } from './exams/rbi_grade_b';
+import { sbi_clerkConfig } from './exams/sbi_clerk';
+import { sbi_poConfig } from './exams/sbi_po';
 import { srmjeeeConfig } from './exams/srmjeee';
 import { ssc_cglConfig } from './exams/ssc_cgl';
 import { ssc_chslConfig } from './exams/ssc_chsl';
@@ -32,6 +39,9 @@ export const FORMATS: FormatConfig[] = [
   bitsatConfig,
   comedk_ugetConfig,
   gujcetConfig,
+  ibps_clerkConfig,
+  ibps_poConfig,
+  ibps_rrbConfig,
   ini_cetConfig,
   jee_advancedConfig,
   jee_mainConfig,
@@ -42,6 +52,10 @@ export const FORMATS: FormatConfig[] = [
   neet_pgConfig,
   neet_ugConfig,
   ojeeConfig,
+  rbi_assistantConfig,
+  rbi_grade_bConfig,
+  sbi_clerkConfig,
+  sbi_poConfig,
   srmjeeeConfig,
   ssc_cglConfig,
   ssc_chslConfig,
