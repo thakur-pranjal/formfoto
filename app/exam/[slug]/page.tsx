@@ -40,8 +40,8 @@ export default async function FormatPage({
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white flex flex-col items-center px-4 py-16">
-      <div className="w-full max-w-2xl flex flex-col gap-4">
+    <main className="min-h-screen bg-slate-950 text-white flex flex-col items-center px-4 py-16 lg:px-8">
+      <div className="w-full max-w-6xl flex flex-col gap-4">
         <h1 className="text-4xl font-bold tracking-tight text-sky-400">
           {format.title}
         </h1>

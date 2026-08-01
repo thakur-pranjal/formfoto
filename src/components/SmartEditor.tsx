@@ -547,7 +547,7 @@ export default function SmartEditor({ config }: SmartEditorProps) {
         {/* ------------------------------------------------------------------ */}
         {/* LEFT COLUMN — Requirements Panel                                    */}
         {/* ------------------------------------------------------------------ */}
-        <aside className="lg:col-span-5 flex flex-col gap-4">
+        <aside className={`${!imageSrc ? "lg:col-span-5" : "lg:col-span-3"} flex flex-col gap-4`}>
 
           {/* Header */}
           <div>
@@ -640,7 +640,7 @@ export default function SmartEditor({ config }: SmartEditorProps) {
         {/* ------------------------------------------------------------------ */}
         {/* RIGHT COLUMN — Dropzone / Editor Engine                             */}
         {/* ------------------------------------------------------------------ */}
-        <section className="lg:col-span-7 flex flex-col gap-5">
+        <section className={`${!imageSrc ? "lg:col-span-7" : "lg:col-span-9"} flex flex-col gap-5`}>
 
           {!imageSrc ? (
             /* -------- Pre-upload: premium dropzone -------- */
@@ -699,26 +699,26 @@ export default function SmartEditor({ config }: SmartEditorProps) {
             </div>
           ) : (
             /* -------- Post-upload: crop + controls -------- */
-            <div className="flex flex-col md:flex-row gap-4 md:gap-8 w-full">
+            <div className="flex flex-col xl:flex-row gap-6 w-full">
               
               {/* --- LEFT SIDE: CROP AREA --- */}
-              <div className="flex flex-col gap-4 w-full flex-1">
+              <div className="flex flex-col gap-4 w-full flex-1 min-w-0">
                 {/* Crop canvas */}
-                <div className="relative w-full max-w-[100vw] md:max-w-2xl overflow-hidden flex justify-center rounded-2xl border border-slate-700 bg-slate-900/60 shadow-xl shadow-black/30">
+                <div className="relative w-full overflow-hidden flex-1 bg-black/20 rounded-3xl border border-slate-700/50 flex items-center justify-center p-4 sm:p-8 min-h-[500px]">
                   <ReactCrop
                     crop={crop}
                     onChange={(_c, percentCrop) => setCrop(percentCrop)}
                     onComplete={(c) => setCompletedCrop(c)}
                     aspect={aspectRatio}
                     keepSelection
-                    className="max-h-[60vh] w-full flex justify-center"
+                    className="w-full flex justify-center"
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={imageSrc}
                       alt="Upload preview"
                       onLoad={onImageLoad}
-                      className="max-h-[60vh] w-auto object-contain"
+                      className="max-h-[70vh] w-auto object-contain drop-shadow-2xl"
                     />
                   </ReactCrop>
                   {isRemovingBg && <AIProcessingOverlay />}
@@ -747,7 +747,7 @@ export default function SmartEditor({ config }: SmartEditorProps) {
               </div>
 
               {/* --- RIGHT SIDE: CONTROLS PANEL --- */}
-              <div className="w-full md:w-80 flex flex-col gap-4">
+              <div className="w-full xl:w-[340px] shrink-0 flex flex-col gap-4">
                 {/* Target size slider */}
                 <div className="rounded-2xl border border-slate-700 bg-slate-800/60 px-5 py-4 shadow-lg shadow-black/20">
                   <div className="mb-4 flex items-center justify-between gap-4">
