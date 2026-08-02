@@ -1,21 +1,4 @@
-export interface FormatDocument {
-  id: string;
-  name: string;
-  width: number;
-  height: number;
-  minKb: number;
-  maxKb: number;
-  rules?: Record<string, any>;
-}
-
-export interface FormatConfig {
-  id: string;
-  title: string;
-  description: string;
-  category: 'exam' | 'passport' | 'visa';
-  subCategory: string;
-  documents: FormatDocument[];
-}
+import { FormatConfig } from '../formats';
 
 export const ini_cetConfig: FormatConfig = {
   id: 'ini_cet',
@@ -31,6 +14,7 @@ export const ini_cetConfig: FormatConfig = {
       height: 531, // 4.5 cm calculated at 300 DPI
       minKb: 50,
       maxKb: 100,
+      stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG', 'GIF', 'PNG'],
         backgroundColor: 'White (Light-colored)',
@@ -65,6 +49,7 @@ export const ini_cetConfig: FormatConfig = {
       height: 354, // 3 cm calculated at 300 DPI
       minKb: 20,
       maxKb: 100,
+      stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG', 'GIF', 'PNG'],
         inkColor: 'Black or Blue ink pen (thick-tip ballpoint pen preferred)',
@@ -83,6 +68,7 @@ export const ini_cetConfig: FormatConfig = {
       height: 354, // 3 cm calculated at 300 DPI
       minKb: 10,   // Defaulted to 10 as missing in payload
       maxKb: 100,
+      stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG', 'GIF', 'PNG'],
         inkColor: 'Blue or Black ink pad',

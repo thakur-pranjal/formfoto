@@ -1,21 +1,4 @@
-export interface FormatDocument {
-  id: string;
-  name: string;
-  width: number;
-  height: number;
-  minKb: number;
-  maxKb: number;
-  rules?: Record<string, any>;
-}
-
-export interface FormatConfig {
-  id: string;
-  title: string;
-  description: string;
-  category: 'exam' | 'passport' | 'visa';
-  subCategory: string;
-  documents: FormatDocument[];
-}
+import { FormatConfig } from '../formats';
 
 export const rajasthan_policeConfig: FormatConfig = {
   id: 'rajasthan_police',

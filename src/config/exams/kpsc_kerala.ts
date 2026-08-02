@@ -1,21 +1,4 @@
-export interface FormatDocument {
-  id: string;
-  name: string;
-  width: number;
-  height: number;
-  minKb: number;
-  maxKb: number;
-  rules?: Record<string, any>;
-}
-
-export interface FormatConfig {
-  id: string;
-  title: string;
-  description: string;
-  category: 'exam' | 'passport' | 'visa';
-  subCategory: string;
-  documents: FormatDocument[];
-}
+import { FormatConfig } from '../formats';
 
 export const kpsc_keralaConfig: FormatConfig = {
   id: 'kpsc_kerala',
@@ -31,6 +14,7 @@ export const kpsc_keralaConfig: FormatConfig = {
       height: 531, // 4.5 cm at 300 DPI (4.5 / 2.54 * 300 = 531.49)
       minKb: 10,
       maxKb: 30,
+      stampRequired: false,
       rules: {
         exactPortalWidthPx: 150,
         exactPortalHeightPx: 200,
@@ -61,6 +45,7 @@ export const kpsc_keralaConfig: FormatConfig = {
       height: 100, // Provided explicitly in pixels
       minKb: 10,
       maxKb: 30,
+      stampRequired: false,
       rules: {
         allowedFormats: ['JPG'],
         inkColor: 'Blue or black ink',

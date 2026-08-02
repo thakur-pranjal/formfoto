@@ -1,21 +1,4 @@
-export interface FormatDocument {
-  id: string;
-  name: string;
-  width: number;
-  height: number;
-  minKb: number;
-  maxKb: number;
-  rules?: Record<string, any>;
-}
-
-export interface FormatConfig {
-  id: string;
-  title: string;
-  description: string;
-  category: 'exam' | 'passport' | 'visa';
-  subCategory: string;
-  documents: FormatDocument[];
-}
+import { FormatConfig } from '../formats';
 
 export const ssc_stenographerConfig: FormatConfig = {
   id: 'ssc_stenographer',
@@ -31,6 +14,7 @@ export const ssc_stenographerConfig: FormatConfig = {
       height: 0,
       minKb: 10,
       maxKb: 50,
+      stampRequired: false,
       rules: {
         captureMethod: 'Captured directly via live photo module (webcam/mobile application)',
         uploadAllowed: false,
@@ -58,6 +42,7 @@ export const ssc_stenographerConfig: FormatConfig = {
       height: 236, // 2.0 cm converted to pixels at 300 DPI (2 / 2.54 * 300)
       minKb: 10,
       maxKb: 20,
+      stampRequired: false,
       rules: {
         allowedFormats: ['JPEG', 'JPG'],
         inkColor: 'Black or Blue (Black preferred)',

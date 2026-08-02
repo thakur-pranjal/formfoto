@@ -1,21 +1,4 @@
-export interface FormatDocument {
-  id: string;
-  name: string;
-  width: number;
-  height: number;
-  minKb: number;
-  maxKb: number;
-  rules?: Record<string, any>;
-}
-
-export interface FormatConfig {
-  id: string;
-  title: string;
-  description: string;
-  category: 'exam' | 'passport' | 'visa';
-  subCategory: string;
-  documents: FormatDocument[];
-}
+import { FormatConfig } from '../formats';
 
 export const tnpscConfig: FormatConfig = {
   id: 'tnpsc',
@@ -31,6 +14,7 @@ export const tnpscConfig: FormatConfig = {
       height: 531, // 4.5 cm at 300 DPI (4.5 / 2.54 * 300 = 531.49)
       minKb: 20,
       maxKb: 50,
+      stampRequired: false,
       rules: {
         dpiRequirement: 200,
         allowedFormats: ['JPG', 'JPEG'],
@@ -64,6 +48,7 @@ export const tnpscConfig: FormatConfig = {
       height: 0,
       minKb: 10,
       maxKb: 20,
+      stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         inkColor: 'Black or dark blue ink',
@@ -80,6 +65,7 @@ export const tnpscConfig: FormatConfig = {
       height: 0,
       minKb: 10,
       maxKb: 20,
+      stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG']
       }

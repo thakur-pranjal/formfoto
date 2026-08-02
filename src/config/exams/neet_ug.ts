@@ -1,21 +1,4 @@
-export interface FormatDocument {
-  id: string;
-  name: string;
-  width: number;
-  height: number;
-  minKb: number;
-  maxKb: number;
-  rules?: Record<string, any>;
-}
-
-export interface FormatConfig {
-  id: string;
-  title: string;
-  description: string;
-  category: 'exam' | 'passport' | 'visa';
-  subCategory: string;
-  documents: FormatDocument[];
-}
+import { FormatConfig } from '../formats';
 
 export const neet_ugConfig: FormatConfig = {
   id: 'neet_ug',
@@ -31,6 +14,7 @@ export const neet_ugConfig: FormatConfig = {
       height: 531, // 4.5 cm calculated at 300 DPI
       minKb: 10,
       maxKb: 200,
+      stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         backgroundColor: 'Plain White',
@@ -67,6 +51,7 @@ export const neet_ugConfig: FormatConfig = {
       height: 0,
       minKb: 10,
       maxKb: 50,
+      stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         inkColor: 'Black',
@@ -86,6 +71,7 @@ export const neet_ugConfig: FormatConfig = {
       height: 0,
       minKb: 10,
       maxKb: 200,
+      stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         inkColor: ['Blue', 'Black'],
