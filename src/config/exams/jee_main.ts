@@ -31,6 +31,7 @@ export const jee_mainConfig: FormatConfig = {
       height: 531,
       minKb: 10,
       maxKb: 200,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         backgroundColor: 'Plain white',
@@ -61,6 +62,7 @@ export const jee_mainConfig: FormatConfig = {
       height: 177,
       minKb: 10,
       maxKb: 100,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         inkColor: 'Blue or black ink',

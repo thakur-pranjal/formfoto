@@ -30,7 +30,8 @@ export const ailetConfig: FormatConfig = {
       width: 413, // Standard 3.5cm width at 300 DPI fallback
       height: 531, // Standard 4.5cm height at 300 DPI fallback
       minKb: 10,
-      maxKb: 1024, // 1 MB
+      maxKb: 1024,
+    stampRequired: false, // 1 MB
       rules: {
         allowedFormats: ['JPG', 'JPEG', 'PNG'],
         pngAllowed: true,
@@ -54,7 +55,8 @@ export const ailetConfig: FormatConfig = {
       width: 709, // 6 cm at 300 DPI
       height: 354, // 3 cm at 300 DPI
       minKb: 10,
-      maxKb: 1024, // 1 MB
+      maxKb: 1024,
+    stampRequired: false, // 1 MB
       rules: {
         allowedFormats: ['JPG', 'JPEG', 'PNG'],
         pngAllowed: true,
@@ -74,6 +76,7 @@ export const ailetConfig: FormatConfig = {
       height: 256, // Standard thumb impression height fallback
       minKb: 10,
       maxKb: 50,
+    stampRequired: false,
       rules: {
         status: 'Explicitly mentioned but specifications currently omitted from official notification.'
       }

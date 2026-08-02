@@ -31,6 +31,7 @@ export const uppscConfig: FormatConfig = {
       height: 709, // 6 cm at 300 DPI (6 / 2.54 * 300 = 708.66)
       minKb: 10,
       maxKb: 50,
+    stampRequired: false,
       rules: {
         aspectRatio: '5:6',
         dpiRequirement: 200, 
@@ -49,6 +50,7 @@ export const uppscConfig: FormatConfig = {
       height: 354, // 3 cm at 300 DPI (3 / 2.54 * 300 = 354.33)
       minKb: 10,
       maxKb: 30,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG', 'JPE'],
         inkColor: 'Black ink only',

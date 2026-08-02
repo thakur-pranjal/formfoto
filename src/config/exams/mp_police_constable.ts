@@ -5,6 +5,7 @@ export interface FormatDocument {
   height: number;
   minKb: number;
   maxKb: number;
+  stampRequired?: boolean;
   rules?: Record<string, any>;
 }
 
@@ -31,6 +32,7 @@ export const mp_police_constableConfig: FormatConfig = {
       height: 591, // 5.0 cm calculated at 300 DPI (5.0 / 2.54 * 300)
       minKb: 30,
       maxKb: 200,
+      stampRequired: true,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         backgroundColor: 'White',
@@ -62,6 +64,7 @@ export const mp_police_constableConfig: FormatConfig = {
       height: 0,
       minKb: 30,
       maxKb: 200,
+      stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         backgroundColor: 'White paper template',

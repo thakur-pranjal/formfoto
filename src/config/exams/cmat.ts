@@ -31,6 +31,7 @@ export const cmatConfig: FormatConfig = {
       height: 531,
       minKb: 10,
       maxKb: 200,
+    stampRequired: false,
       rules: {
         allowedFormats: ['.jpg', '.jpeg'],
         backgroundColor: 'White',
@@ -55,6 +56,7 @@ export const cmatConfig: FormatConfig = {
       height: 413,
       minKb: 10,
       maxKb: 50,
+    stampRequired: false,
       rules: {
         allowedFormats: ['.jpg', '.jpeg'],
         inkColor: 'Blue or Black ink',

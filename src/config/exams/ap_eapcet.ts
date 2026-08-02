@@ -31,6 +31,7 @@ export const ap_eapcetConfig: FormatConfig = {
       height: 0,
       minKb: 10,
       maxKb: 50,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         backgroundColor: 'White or light background',
@@ -54,6 +55,7 @@ export const ap_eapcetConfig: FormatConfig = {
       height: 0,
       minKb: 10,
       maxKb: 30,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         inkColor: 'Black or Blue typically preferred',

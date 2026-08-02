@@ -31,6 +31,7 @@ export const hp_police_constableConfig: FormatConfig = {
       height: 140,
       minKb: 10,
       maxKb: 40,
+    stampRequired: false,
       rules: {
         minPixels: '110 x 140 px',
         allowedFormats: ['JPG', 'JPEG'],
@@ -62,6 +63,7 @@ export const hp_police_constableConfig: FormatConfig = {
       height: 110,
       minKb: 10,
       maxKb: 40,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         inkColor: 'Black ink pen ONLY',

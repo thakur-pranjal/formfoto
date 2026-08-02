@@ -31,6 +31,7 @@ export const indian_army_agniveerConfig: FormatConfig = {
       height: 0,
       minKb: 10,
       maxKb: 50,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         backgroundColor: 'Light / Plain White',
@@ -52,6 +53,7 @@ export const indian_army_agniveerConfig: FormatConfig = {
       height: 0,
       minKb: 10,
       maxKb: 20,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         inkColor: 'Black or Blue ink (running handwriting)',

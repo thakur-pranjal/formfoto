@@ -31,6 +31,7 @@ export const rajasthan_policeConfig: FormatConfig = {
       height: 531, // 4.5 cm calculated at 300 DPI (4.5 / 2.54 * 300)
       minKb: 50,
       maxKb: 100,
+    stampRequired: false,
       rules: {
         minPixels: '240 x 320 px',
         maxPixels: '480 x 640 px (0.3 megapixels)',
@@ -62,6 +63,7 @@ export const rajasthan_policeConfig: FormatConfig = {
       height: 236, // 2.0 cm calculated at 300 DPI (2.0 / 2.54 * 300)
       minKb: 20,
       maxKb: 50,
+    stampRequired: false,
       rules: {
         minPixels: '280x80 px',
         maxPixels: '560x160 px',

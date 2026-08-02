@@ -31,6 +31,7 @@ export const htetConfig: FormatConfig = {
       height: 531, // Calculated for 4.5 cm at 300 DPI
       minKb: 20,
       maxKb: 50,
+    stampRequired: false,
       rules: {
         dpiRequired: 200, // Explicitly listed in payload as 200 dpi
         allowedFormats: ['JPG', 'JPEG'],
@@ -56,6 +57,7 @@ export const htetConfig: FormatConfig = {
           format: 'PDF',
           minKb: 50,
           maxKb: 200,
+    stampRequired: false,
           commonRejectionReasons: ['Blurred certificate PDFs']
         },
         expiryRecommendation: 'Valid Until: End of application and correction window (January 2026).'
@@ -68,6 +70,7 @@ export const htetConfig: FormatConfig = {
       height: 0, // Not specified in official payload
       minKb: 10,
       maxKb: 50,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         inkColor: 'Black or Blue ink pen',
@@ -89,6 +92,7 @@ export const htetConfig: FormatConfig = {
       height: 0, // Not specified in official payload
       minKb: 10,
       maxKb: 50,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         colorRequirements: 'Blue or Black stamp pad on white paper (Left Hand Thumb Impression)',

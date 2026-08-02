@@ -31,6 +31,7 @@ export const upsc_capfConfig: FormatConfig = {
       height: 350,
       minKb: 20,
       maxKb: 200,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG'],
         backgroundColor: 'Plain white',
@@ -68,6 +69,7 @@ export const upsc_capfConfig: FormatConfig = {
       height: 350,
       minKb: 20,
       maxKb: 100,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG'],
         dimensionRange: '350 - 500 pixels',

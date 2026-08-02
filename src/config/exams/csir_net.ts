@@ -31,6 +31,7 @@ export const csir_netConfig: FormatConfig = {
       height: 531, // Standard 4.5cm height at 300 DPI fallback
       minKb: 10,
       maxKb: 200,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         backgroundColor: 'White background',
@@ -57,6 +58,7 @@ export const csir_netConfig: FormatConfig = {
       height: 64, // Standard signature height fallback
       minKb: 4,
       maxKb: 30,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         inkColor: 'Black or Blue ink',
@@ -77,6 +79,7 @@ export const csir_netConfig: FormatConfig = {
       height: 256, // Standard thumb impression height fallback
       minKb: 10,
       maxKb: 50,
+    stampRequired: false,
       rules: {
         status: 'Explicitly mentioned but specifications currently omitted from official notification.',
         compressionRestrictions: 'Must be clearly legible/identifiable; blurred images will lead to rejection'

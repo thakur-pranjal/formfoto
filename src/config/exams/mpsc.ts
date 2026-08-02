@@ -31,6 +31,7 @@ export const mpscConfig: FormatConfig = {
       height: 531, // 4.5 cm at 300 DPI (4.5 / 2.54 * 300 = 531.49)
       minKb: 10,
       maxKb: 50,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         backgroundColor: 'Solid color (preferably Blue, Green, Red)',
@@ -55,6 +56,7 @@ export const mpscConfig: FormatConfig = {
       height: 177, // 1.5 cm at 300 DPI (1.5 / 2.54 * 300 = 177.16)
       minKb: 10,
       maxKb: 50,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         inkColor: 'Black ink only',

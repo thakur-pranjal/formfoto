@@ -31,6 +31,7 @@ export const ts_eamcetConfig: FormatConfig = {
       height: 0,
       minKb: 10,
       maxKb: 50,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         backgroundColor: 'White or light background',
@@ -56,6 +57,7 @@ export const ts_eamcetConfig: FormatConfig = {
       height: 0,
       minKb: 10,
       maxKb: 30,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         inkColor: 'Black or dark blue pen',

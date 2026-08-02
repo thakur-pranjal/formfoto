@@ -5,6 +5,7 @@ export interface FormatDocument {
   height: number;
   minKb: number;
   maxKb: number;
+  stampRequired?: boolean;
   rules?: Record<string, any>;
 }
 
@@ -31,6 +32,7 @@ export const haryana_police_constableConfig: FormatConfig = {
       height: 531, // 4.5 cm calculated at 300 DPI (4.5 / 2.54 * 300)
       minKb: 20,
       maxKb: 50,
+      stampRequired: true,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         backgroundColor: 'White or light-colored background',
@@ -48,7 +50,7 @@ export const haryana_police_constableConfig: FormatConfig = {
         compressionRestrictions: 'Must strictly fall within KB limits to bypass portal validation errors',
         validUntil: 'Photograph must be recent, typically taken within 3 months of the application date.',
         commonRejectionReasons: [
-          'Uploading a photograph without the candidate\'s name and photo capture date printed on it.',
+          "Uploading a photograph without the candidate's name and photo capture date printed on it.",
           'Uploading a photograph with a dark or patterned background.',
           'File size exceeding 50 KB for the photo.'
         ]
@@ -61,6 +63,7 @@ export const haryana_police_constableConfig: FormatConfig = {
       height: 177, // 1.5 cm calculated at 300 DPI (1.5 / 2.54 * 300)
       minKb: 10,
       maxKb: 20,
+      stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         inkColor: 'Black or Blue ink',

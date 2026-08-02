@@ -5,6 +5,7 @@ export interface FormatDocument {
   height: number;
   minKb: number;
   maxKb: number;
+  stampRequired?: boolean;
   rules?: Record<string, any>;
 }
 
@@ -31,6 +32,7 @@ export const ktetConfig: FormatConfig = {
       height: 200, // Explicitly defined as 200 px in payload
       minKb: 20,
       maxKb: 30,
+      stampRequired: true,
       rules: {
         aspectRatio: '3:4',
         minPixels: '150 x 200',
@@ -65,6 +67,7 @@ export const ktetConfig: FormatConfig = {
       height: 236, // Calculated from 2 cm at 300 DPI
       minKb: 20,
       maxKb: 50,
+      stampRequired: false,
       rules: {
         minPixels: '280 x 80',
         maxPixels: '560 x 160',

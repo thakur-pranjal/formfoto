@@ -31,6 +31,7 @@ export const viteeeConfig: FormatConfig = {
       height: 475,
       minKb: 20,
       maxKb: 300,
+    stampRequired: false,
       rules: {
         minWidthPixels: 300,
         maxWidthPixels: 400,
@@ -69,6 +70,7 @@ export const viteeeConfig: FormatConfig = {
       height: 177,
       minKb: 5,
       maxKb: 150,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPEG'],
         inkColor: 'Dark blue or black pen',

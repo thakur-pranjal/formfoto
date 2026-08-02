@@ -31,6 +31,7 @@ export const nid_datConfig: FormatConfig = {
       height: 531, // Standard 4.5cm height at 300 DPI fallback
       minKb: 50,
       maxKb: 200,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         colorMode: 'Colour',
@@ -48,6 +49,7 @@ export const nid_datConfig: FormatConfig = {
       height: 64, // Standard signature height fallback
       minKb: 50,
       maxKb: 200,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         rejectionReasons: [

@@ -31,6 +31,7 @@ export const bitsatConfig: FormatConfig = {
       height: 531,
       minKb: 50,
       maxKb: 100,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         backgroundColor: 'Plain or white color',
@@ -63,6 +64,7 @@ export const bitsatConfig: FormatConfig = {
       height: 177,
       minKb: 10,
       maxKb: 100,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         inkColor: 'Black or blue ink',

@@ -31,6 +31,7 @@ export const kcetConfig: FormatConfig = {
       height: 531, // 4.5 cm at 300 DPI
       minKb: 5,
       maxKb: 50,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         backgroundColor: 'White background',
@@ -57,6 +58,7 @@ export const kcetConfig: FormatConfig = {
       height: 177, // 1.5 cm at 300 DPI
       minKb: 5,
       maxKb: 50,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         inkColor: 'Black ballpoint pen',
@@ -75,6 +77,7 @@ export const kcetConfig: FormatConfig = {
       height: 177, // 1.5 cm at 300 DPI
       minKb: 5,    // Inferred from global 5-50KB limits
       maxKb: 50,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         impressionDetails: 'Left-hand thumb impression using a stamp pad or ink',

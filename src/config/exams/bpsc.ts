@@ -31,6 +31,7 @@ export const bpscConfig: FormatConfig = {
       height: 0,
       minKb: 15,
       maxKb: 25,
+    stampRequired: false,
       rules: {
         captureMethod: 'Live webcam capture is the primary requirement',
         allowedFormats: ['JPG', 'JPEG'],
@@ -57,6 +58,7 @@ export const bpscConfig: FormatConfig = {
       height: 100,
       minKb: 10,
       maxKb: 15,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         inkColor: 'Black ink',

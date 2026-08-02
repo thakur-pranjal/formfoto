@@ -31,6 +31,7 @@ export const comedk_ugetConfig: FormatConfig = {
       height: 531, // 45 mm at 300 DPI
       minKb: 10,
       maxKb: 80,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPEG', 'JPG'],
         backgroundColor: 'Light background',
@@ -60,6 +61,7 @@ export const comedk_ugetConfig: FormatConfig = {
       height: 413, // 35 mm at 300 DPI
       minKb: 10,
       maxKb: 80,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPEG', 'JPG'],
         inkColor: 'Black or blue pen',

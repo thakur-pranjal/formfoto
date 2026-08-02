@@ -31,6 +31,7 @@ export const ojeeConfig: FormatConfig = {
       height: 0,
       minKb: 10,
       maxKb: 50,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG'],
         colorMode: 'Color',
@@ -55,6 +56,7 @@ export const ojeeConfig: FormatConfig = {
       height: 0,
       minKb: 10,
       maxKb: 50,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG'],
         namingConvention: 'File name should not contain any numeric value or special characters',

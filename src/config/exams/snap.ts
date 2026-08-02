@@ -31,6 +31,7 @@ export const snapConfig: FormatConfig = {
       height: 531, 
       minKb: 10,
       maxKb: 5120,
+    stampRequired: false,
       rules: {
         allowedFormats: ['.jpg', '.jpeg', '.png', '.gif'],
         backgroundColor: 'White preferred',

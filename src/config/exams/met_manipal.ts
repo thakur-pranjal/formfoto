@@ -31,6 +31,7 @@ export const met_manipalConfig: FormatConfig = {
       height: 531,
       minKb: 10,
       maxKb: 2048,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         backgroundColor: 'White or light background',
@@ -58,6 +59,7 @@ export const met_manipalConfig: FormatConfig = {
       height: 0,
       minKb: 10,
       maxKb: 2048,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         inkColor: 'Black or Blue pen',

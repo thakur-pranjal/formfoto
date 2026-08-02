@@ -31,6 +31,7 @@ export const rpscConfig: FormatConfig = {
       height: 531, // 4.5 cm at 300 DPI (4.5 / 2.54 * 300 = 531.49)
       minKb: 50,
       maxKb: 100,
+    stampRequired: false,
       rules: {
         minPixels: '240 x 320 px',
         maxPixels: '480 x 640 px',
@@ -60,6 +61,7 @@ export const rpscConfig: FormatConfig = {
       height: 236, // 2 cm at 300 DPI (2 / 2.54 * 300 = 236.22)
       minKb: 10,
       maxKb: 50,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         inkColor: 'Black or dark blue ink',

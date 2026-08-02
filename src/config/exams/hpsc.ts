@@ -31,6 +31,7 @@ export const hpscConfig: FormatConfig = {
       height: 531, // 4.5 cm at 300 DPI (4.5 / 2.54 * 300 = 531.49)
       minKb: 10,
       maxKb: 100,
+    stampRequired: false,
       rules: {
         minPixels: '132 x 170 px',
         maxPixels: '160 x 204 px',
@@ -61,6 +62,7 @@ export const hpscConfig: FormatConfig = {
       height: 60, // Provided directly in pixels, using max range value
       minKb: 10,
       maxKb: 50,
+    stampRequired: false,
       rules: {
         widthRangePx: '138 px to 140 px',
         heightRangePx: '59 px to 60 px',

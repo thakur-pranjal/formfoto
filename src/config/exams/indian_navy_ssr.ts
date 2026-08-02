@@ -1,19 +1,20 @@
 export interface FormatDocument {
-  id: string;        // Must be 'photo', 'signature', or 'thumb_impression'
-  name: string;      // E.g., 'Passport Photo', 'Signature'
-  width: number;     // Integer values only. (If payload gives cm/mm, calculate pixel equivalents at 300 DPI).
-  height: number;    // Integer values only.
-  minKb: number;     // Integer only. Default to 10 if missing.
-  maxKb: number;     // Integer only. Default to 50 if missing.
-  rules?: Record<string, any>; // MAP ALL EXTRA COMPLIANCE DATA HERE (e.g., backgroundColor, glassesAllowed, stampRequired, inkColor)
+  id: string;
+  name: string;
+  width: number;
+  height: number;
+  minKb: number;
+  maxKb: number;
+  stampRequired?: boolean;
+  rules?: Record<string, any>;
 }
 
 export interface FormatConfig {
-  id: string;        // Use the exact EXAM_ID from the payload.
-  title: string;     // Clean display title (e.g., 'SBI PO 2026')
-  description: string; // Generate a short 1-sentence SEO-friendly description.
-  category: 'exam' | 'passport' | 'visa'; // Must strictly be 'exam'.
-  subCategory: string; // Map based on exam type (e.g., 'Banking', 'Medical', 'UPSC', 'Defence').
+  id: string;
+  title: string;
+  description: string;
+  category: 'exam' | 'passport' | 'visa';
+  subCategory: string;
   documents: FormatDocument[];
 }
 
@@ -31,6 +32,7 @@ export const indian_navy_ssrConfig: FormatConfig = {
       height: 0,
       minKb: 10,
       maxKb: 50,
+      stampRequired: true,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         backgroundColor: 'Light / Plain White',
@@ -42,7 +44,7 @@ export const indian_navy_ssrConfig: FormatConfig = {
         headwearAllowed: 'No (except for customary religious practices i.e., Sikh candidates)',
         nameAndDateStampRequired: true,
         stampPosition: 'Candidate must hold a black slate in front of their chest',
-        stampFormat: 'Candidate\'s Name and Date of Photograph (DOP) clearly written in capital letters with white chalk on the black slate',
+        stampFormat: "Candidate's Name and Date of Photograph (DOP) clearly written in capital letters with white chalk on the black slate",
         rejectionReasons: [
           'Failure to hold the black slate with Name and Date of Photograph',
           'Writing on the slate in running handwriting instead of capital letters',
@@ -59,6 +61,7 @@ export const indian_navy_ssrConfig: FormatConfig = {
       height: 0,
       minKb: 10,
       maxKb: 50,
+      stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         inkColor: 'Blue / Black ink',

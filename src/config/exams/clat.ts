@@ -5,6 +5,7 @@ export interface FormatDocument {
   height: number;
   minKb: number;
   maxKb: number;
+  stampRequired?: boolean;
   rules?: Record<string, any>;
 }
 
@@ -31,6 +32,7 @@ export const clatConfig: FormatConfig = {
       height: 230,
       minKb: 20,
       maxKb: 50,
+      stampRequired: true,
       rules: {
         minDpi: 200,
         allowedFormats: ['JPG', 'JPEG'],
@@ -60,6 +62,7 @@ export const clatConfig: FormatConfig = {
       height: 60,
       minKb: 10,
       maxKb: 20,
+      stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         pngAllowed: false,
@@ -76,10 +79,11 @@ export const clatConfig: FormatConfig = {
     {
       id: 'thumb_impression',
       name: 'Thumb Impression',
-      width: 256, // Standard thumb impression width fallback
-      height: 256, // Standard thumb impression height fallback
+      width: 256,
+      height: 256,
       minKb: 10,
       maxKb: 50,
+      stampRequired: false,
       rules: {
         status: 'Explicitly mentioned but specifications currently omitted from official notification.'
       }

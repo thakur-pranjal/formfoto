@@ -167,7 +167,13 @@ export default function SmartEditor({ config }: SmartEditorProps) {
   const [activeDocIndex, setActiveDocIndex] = useState(0);
   const activeDoc = config.documents[activeDocIndex];
   const { width, height, minKb, maxKb, name: docName } = activeDoc;
-  const aspectRatio = width / height;
+  // Defensive fallbacks: some exam configs legitimately ship 0×0 dimensions
+  // (e.g. "any standard passport size"). Use these safe values everywhere
+  // the engine needs real pixels, but keep `width`/`height` untouched so the
+  // UI can detect the zero-dimension case and show friendly copy instead.
+  const safeWidth  = width  === 0 ? 413 : width;
+  const safeHeight = height === 0 ? 531 : height;
+  const aspectRatio = safeWidth / safeHeight;
 
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [crop, setCrop] = useState<PercentCrop>();
@@ -208,6 +214,9 @@ export default function SmartEditor({ config }: SmartEditorProps) {
     setFinalSizeKb(null);    
     setError(null);
     setEstimatedFileSize("—");
+    // State protection: always wipe an active stamp when the document changes
+    // so it cannot leak onto a doc that forbids stamping.
+    setIsStampingEnabled(false);
     imgRef.current = null;
   }, [activeDocIndex]);
 
@@ -278,8 +287,8 @@ export default function SmartEditor({ config }: SmartEditorProps) {
     if (!completedCrop.width || !completedCrop.height) return null;
 
     const canvas = document.createElement("canvas");
-    canvas.width = width;
-    canvas.height = height;
+    canvas.width = safeWidth;
+    canvas.height = safeHeight;
     const ctx = canvas.getContext("2d");
     if (!ctx) return null;
 
@@ -292,7 +301,7 @@ export default function SmartEditor({ config }: SmartEditorProps) {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // ── Step 2: Draw the cropped photo on top of the background ────────────
-    const photoHeight = isStampingEnabled ? Math.round(height * 0.85) : height;
+    const photoHeight = isStampingEnabled ? Math.round(safeHeight * 0.85) : safeHeight;
     ctx.drawImage(
       image,
       completedCrop.x * scaleX,
@@ -301,18 +310,18 @@ export default function SmartEditor({ config }: SmartEditorProps) {
       completedCrop.height * scaleY,
       0,
       0,
-      width,
+      safeWidth,
       photoHeight
     );
 
     // ── Step 3: Auto-Stamper overlay (only when enabled) ───────────────────
     if (isStampingEnabled) {
       const stripY = photoHeight;
-      const stripHeight = height - photoHeight;
+      const stripHeight = safeHeight - photoHeight;
 
       // White strip for legible text
       ctx.fillStyle = "#FFFFFF";
-      ctx.fillRect(0, stripY, width, stripHeight);
+      ctx.fillRect(0, stripY, safeWidth, stripHeight);
 
       // Text
       const fontSize = Math.max(10, Math.round(stripHeight * 0.32));
@@ -321,12 +330,12 @@ export default function SmartEditor({ config }: SmartEditorProps) {
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
 
-      ctx.fillText(stampName || "Full Name", width / 2, stripY + stripHeight * 0.32);
-      ctx.fillText(stampDate, width / 2, stripY + stripHeight * 0.72);
+      ctx.fillText(stampName || "Full Name", safeWidth / 2, stripY + stripHeight * 0.32);
+      ctx.fillText(stampDate, safeWidth / 2, stripY + stripHeight * 0.72);
     }
 
     return canvas;
-  }, [bgColor, completedCrop, height, isStampingEnabled, stampDate, stampName, width]);
+  }, [bgColor, completedCrop, safeHeight, isStampingEnabled, stampDate, stampName, safeWidth]);
 
   // -------------------------------------------------------------------------
   // Binary-search compression (V8 algorithm)
@@ -589,7 +598,9 @@ export default function SmartEditor({ config }: SmartEditorProps) {
                 <div>
                   <p className="text-sm font-semibold text-white">Exact Dimensions</p>
                   <p className="mt-0.5 font-mono text-sm text-slate-300">
-                    {width}&thinsp;&times;&thinsp;{height}&thinsp;px
+                    {width === 0
+                      ? "Standard Passport Size (Auto)"
+                      : <>{width}&thinsp;&times;&thinsp;{height}&thinsp;px</>}
                   </p>
                 </div>
               </li>
@@ -617,7 +628,9 @@ export default function SmartEditor({ config }: SmartEditorProps) {
                 <div>
                   <p className="text-sm font-semibold text-white">Aspect Ratio Locked</p>
                   <p className="mt-0.5 font-mono text-sm text-slate-300">
-                    {(width / height).toFixed(3)}:1 &mdash; enforced by the crop engine
+                    {width === 0
+                      ? "Standard 3.5x4.5"
+                      : <>{(safeWidth / safeHeight).toFixed(3)}:1 &mdash; enforced by the crop engine</>}
                   </p>
                 </div>
               </li>
@@ -780,61 +793,63 @@ export default function SmartEditor({ config }: SmartEditorProps) {
                   </div>
                 </div>
 
-                {/* Name & Date Stamp toggle */}
-                <div className="rounded-2xl border border-slate-700 bg-slate-800/60 px-5 py-4 shadow-lg shadow-black/20 space-y-4">
-                  <label className="flex cursor-pointer items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/15">
-                        <Type className="h-4 w-4 text-amber-400" />
+                {/* Name & Date Stamp — only rendered when the schema explicitly requires it */}
+                {activeDoc.stampRequired && (
+                  <div className="rounded-2xl border border-slate-700 bg-slate-800/60 px-5 py-4 shadow-lg shadow-black/20 space-y-4">
+                    <label className="flex cursor-pointer items-center justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/15">
+                          <Type className="h-4 w-4 text-amber-400" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-white">
+                            Add Stamp
+                          </p>
+                          <p className="text-xs text-slate-500">Required for this document</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm font-semibold text-white">
-                          Add Stamp
-                        </p>
-                        <p className="text-xs text-slate-500">Required for exams</p>
-                      </div>
-                    </div>
-                    {/* Toggle switch */}
-                    <button
-                      type="button"
-                      onClick={() => setIsStampingEnabled((v) => !v)}
-                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 ${
-                        isStampingEnabled ? "bg-amber-500" : "bg-slate-600"
-                      }`}
-                    >
-                      <span
-                        className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow-md transform transition-transform duration-200 ${
-                          isStampingEnabled ? "translate-x-5" : "translate-x-0.5"
+                      {/* Toggle switch */}
+                      <button
+                        type="button"
+                        onClick={() => setIsStampingEnabled((v) => !v)}
+                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 ${
+                          isStampingEnabled ? "bg-amber-500" : "bg-slate-600"
                         }`}
-                      />
-                    </button>
-                  </label>
+                      >
+                        <span
+                          className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow-md transform transition-transform duration-200 ${
+                            isStampingEnabled ? "translate-x-5" : "translate-x-0.5"
+                          }`}
+                        />
+                      </button>
+                    </label>
 
-                  {isStampingEnabled && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                      <div className="relative">
-                        <Type className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-500" />
-                        <input
-                          type="text"
-                          placeholder="Full Name"
-                          value={stampName}
-                          onChange={(e) => setStampName(e.target.value)}
-                          className="w-full rounded-xl border border-slate-600 bg-slate-900/70 py-2.5 pl-9 pr-3 text-sm text-slate-100 placeholder-slate-500 transition focus:border-amber-500/70 focus:outline-none focus:ring-1 focus:ring-amber-500/50"
-                        />
+                    {isStampingEnabled && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                        <div className="relative">
+                          <Type className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-500" />
+                          <input
+                            type="text"
+                            placeholder="Full Name"
+                            value={stampName}
+                            onChange={(e) => setStampName(e.target.value)}
+                            className="w-full rounded-xl border border-slate-600 bg-slate-900/70 py-2.5 pl-9 pr-3 text-sm text-slate-100 placeholder-slate-500 transition focus:border-amber-500/70 focus:outline-none focus:ring-1 focus:ring-amber-500/50"
+                          />
+                        </div>
+                        <div className="relative">
+                          <Calendar className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-500" />
+                          <input
+                            type="text"
+                            placeholder="DD-MM-YYYY"
+                            value={stampDate}
+                            onChange={(e) => setStampDate(e.target.value)}
+                            className="w-full rounded-xl border border-slate-600 bg-slate-900/70 py-2.5 pl-9 pr-3 text-sm text-slate-100 placeholder-slate-500 transition focus:border-amber-500/70 focus:outline-none focus:ring-1 focus:ring-amber-500/50"
+                          />
+                        </div>
                       </div>
-                      <div className="relative">
-                        <Calendar className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-500" />
-                        <input
-                          type="text"
-                          placeholder="DD-MM-YYYY"
-                          value={stampDate}
-                          onChange={(e) => setStampDate(e.target.value)}
-                          className="w-full rounded-xl border border-slate-600 bg-slate-900/70 py-2.5 pl-9 pr-3 text-sm text-slate-100 placeholder-slate-500 transition focus:border-amber-500/70 focus:outline-none focus:ring-1 focus:ring-amber-500/50"
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Studio Background selector */}
                 <div className="rounded-2xl border border-slate-700 bg-slate-800/60 px-5 py-4 shadow-lg shadow-black/20">

@@ -31,6 +31,7 @@ export const sbi_clerkConfig: FormatConfig = {
       height: 413, // Calculated from 3.5 cm at 300 DPI
       minKb: 20,
       maxKb: 50,
+    stampRequired: false,
       rules: {
         preferredPixels: { width: 200, height: 230 },
         allowedFormats: ['JPG', 'JPEG'],
@@ -53,6 +54,7 @@ export const sbi_clerkConfig: FormatConfig = {
       height: 60, // Provided preferred pixels
       minKb: 10,
       maxKb: 20,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         inkColor: 'Black ink only (must NOT be in CAPITAL LETTERS)',
@@ -67,6 +69,7 @@ export const sbi_clerkConfig: FormatConfig = {
       height: 354, // Calculated from 3 cm at 300 DPI
       minKb: 10, // Defaulted as not explicitly provided
       maxKb: 50,
+    stampRequired: false,
       rules: {
         preferredPixels: { width: 240, height: 240 },
         allowedFormats: ['JPG', 'JPEG'],

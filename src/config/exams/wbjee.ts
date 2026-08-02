@@ -31,6 +31,7 @@ export const wbjeeConfig: FormatConfig = {
       height: 531,
       minKb: 10,
       maxKb: 200,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         backgroundColor: 'White background preferred',
@@ -58,6 +59,7 @@ export const wbjeeConfig: FormatConfig = {
       height: 177,
       minKb: 4,
       maxKb: 30,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         inkColor: 'Black or blue pen',

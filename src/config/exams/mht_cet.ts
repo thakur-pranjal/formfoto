@@ -31,6 +31,7 @@ export const mht_cetConfig: FormatConfig = {
       height: 531, // 4.5 cm at 300 DPI
       minKb: 15,
       maxKb: 50,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         backgroundColor: 'Plain light colored or white',
@@ -60,6 +61,7 @@ export const mht_cetConfig: FormatConfig = {
       height: 0, // Not specified in payload
       minKb: 5,
       maxKb: 20,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         inkColor: 'Black',

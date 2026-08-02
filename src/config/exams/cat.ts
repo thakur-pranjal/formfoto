@@ -31,6 +31,7 @@ export const catConfig: FormatConfig = {
       height: 531,
       minKb: 10,
       maxKb: 80,
+    stampRequired: false,
       rules: {
         allowedFormats: ['.jpg', '.jpeg'],
         backgroundColor: 'White or off-white',
@@ -51,6 +52,7 @@ export const catConfig: FormatConfig = {
       height: 413,
       minKb: 10,
       maxKb: 80,
+    stampRequired: false,
       rules: {
         allowedFormats: ['.jpg', '.jpeg'],
         inkColor: 'Black (preferred on white paper)',

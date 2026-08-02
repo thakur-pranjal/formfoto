@@ -5,6 +5,8 @@ export interface FormatDocument {
   height: number;
   minKb: number;
   maxKb: number;
+  /** When true, the Add-Stamp UI panel is shown and the canvas stamper is active. */
+  stampRequired?: boolean;
   rules?: Record<string, any>; // Dynamically captures compliance metadata (bg, ink, stamp, etc.)
 }
 

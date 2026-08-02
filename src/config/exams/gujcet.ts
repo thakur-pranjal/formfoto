@@ -31,6 +31,7 @@ export const gujcetConfig: FormatConfig = {
       height: 120,
       minKb: 5,
       maxKb: 50,
+    stampRequired: false,
       rules: {
         aspectRatio: '1:1',
         allowedFormats: ['JPG', 'JPEG'],
@@ -47,6 +48,7 @@ export const gujcetConfig: FormatConfig = {
       height: 120,
       minKb: 5,
       maxKb: 50,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         dimensionRestrictions: 'Must match 120 x 120 pixels'

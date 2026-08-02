@@ -31,6 +31,7 @@ export const maharashtra_police_bhartiConfig: FormatConfig = {
       height: 200,
       minKb: 5,
       maxKb: 20,
+    stampRequired: false,
       rules: {
         minPixels: '160 x 200 px',
         dpi: '200 DPI (Preferred)',
@@ -64,6 +65,7 @@ export const maharashtra_police_bhartiConfig: FormatConfig = {
       height: 64,
       minKb: 5,
       maxKb: 20,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         inkColor: 'Black ink pen',

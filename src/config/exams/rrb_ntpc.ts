@@ -31,6 +31,7 @@ export const rrb_ntpcConfig: FormatConfig = {
       height: 531,
       minKb: 30,
       maxKb: 70,
+    stampRequired: false,
       rules: {
         minimumDpi: 100,
         allowedFormats: ['JPG', 'JPEG'],
@@ -61,6 +62,7 @@ export const rrb_ntpcConfig: FormatConfig = {
       height: 236,
       minKb: 30,
       maxKb: 70,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         inkColor: 'Black ink pen only',
@@ -83,6 +85,7 @@ export const rrb_ntpcConfig: FormatConfig = {
       height: 236,
       minKb: 10,
       maxKb: 50,
+    stampRequired: false,
       rules: {
         eligibility: 'Only permitted for specific PwBD candidates unable to sign',
         rejectionReasons: [

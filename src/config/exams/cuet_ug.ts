@@ -31,6 +31,7 @@ export const cuet_ugConfig: FormatConfig = {
       height: 531, // Standard 4.5cm height at 300 DPI fallback
       minKb: 10,
       maxKb: 200,
+    stampRequired: false,
       rules: {
         dpi: 200,
         allowedFormats: ['JPG', 'JPEG'],
@@ -61,6 +62,7 @@ export const cuet_ugConfig: FormatConfig = {
       height: 64, // Standard signature height fallback
       minKb: 10,
       maxKb: 50,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         inkColor: 'Black or Blue ink',
@@ -82,6 +84,7 @@ export const cuet_ugConfig: FormatConfig = {
       height: 256, // Standard thumb impression height fallback
       minKb: 10,
       maxKb: 50,
+    stampRequired: false,
       rules: {
         status: 'Explicitly mentioned but specifications currently omitted from official notification.',
         compressionRestrictions: 'Must be clearly legible/identifiable; blurred images fail automatic validation'

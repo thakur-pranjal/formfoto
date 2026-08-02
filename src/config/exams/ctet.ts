@@ -31,6 +31,7 @@ export const ctetConfig: FormatConfig = {
       height: 531, // 4.5 cm at 300 DPI
       minKb: 10,
       maxKb: 100,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         backgroundColor: 'Light or white',
@@ -54,6 +55,7 @@ export const ctetConfig: FormatConfig = {
       height: 177, // 1.5 cm at 300 DPI
       minKb: 3,
       maxKb: 30,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         inkColor: ['Black', 'Blue'],

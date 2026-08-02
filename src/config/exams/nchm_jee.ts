@@ -31,6 +31,7 @@ export const nchm_jeeConfig: FormatConfig = {
       height: 531, // Standard 4.5cm height at 300 DPI fallback
       minKb: 10,
       maxKb: 200,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         backgroundColor: 'White background',
@@ -54,6 +55,7 @@ export const nchm_jeeConfig: FormatConfig = {
       height: 64, // Standard signature height fallback
       minKb: 4,
       maxKb: 30,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         compressionRestrictions: "Must be clear; uploading someone else's or blurred image is treated as Unfair Means (UFM)",
@@ -71,6 +73,7 @@ export const nchm_jeeConfig: FormatConfig = {
       height: 256, // Standard thumb impression height fallback
       minKb: 10,
       maxKb: 50,
+    stampRequired: false,
       rules: {
         status: 'Explicitly mentioned but specifications currently omitted from official notification.',
         compressionRestrictions: "Must be clear; uploading someone else's or blurred image is treated as Unfair Means (UFM)"

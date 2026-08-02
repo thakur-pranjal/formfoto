@@ -31,6 +31,7 @@ export const iiftConfig: FormatConfig = {
       height: 531,
       minKb: 10,
       maxKb: 100,
+    stampRequired: false,
       rules: {
         allowedFormats: ['.jpg', '.jpeg'],
         backgroundColor: 'Light-colored, preferably white',
@@ -56,6 +57,7 @@ export const iiftConfig: FormatConfig = {
       height: 413,
       minKb: 10,
       maxKb: 100,
+    stampRequired: false,
       rules: {
         allowedFormats: ['.jpg', '.jpeg'],
         inkColor: 'Black ink',

@@ -31,6 +31,7 @@ export const nift_entranceConfig: FormatConfig = {
       height: 531, // Standard 4.5cm height at 300 DPI fallback
       minKb: 10,
       maxKb: 200,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         backgroundColor: 'White or light-coloured',
@@ -60,6 +61,7 @@ export const nift_entranceConfig: FormatConfig = {
       height: 64, // Standard signature height fallback
       minKb: 4,
       maxKb: 30,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         inkColor: 'Black or Blue ink (must be in running hand)',
@@ -78,6 +80,7 @@ export const nift_entranceConfig: FormatConfig = {
       height: 256, // Standard thumb impression height fallback
       minKb: 10,
       maxKb: 50,
+    stampRequired: false,
       rules: {
         status: 'Explicitly mentioned but specifications currently omitted from official notification.'
       }

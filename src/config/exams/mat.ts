@@ -31,6 +31,7 @@ export const matConfig: FormatConfig = {
       height: 531,
       minKb: 10,
       maxKb: 50,
+    stampRequired: false,
       rules: {
         allowedFormats: ['.jpg', '.jpeg'],
         backgroundColor: 'Light colored, preferably white',
@@ -51,6 +52,7 @@ export const matConfig: FormatConfig = {
       height: 413,
       minKb: 5,
       maxKb: 20,
+    stampRequired: false,
       rules: {
         allowedFormats: ['.jpg', '.jpeg'],
         inkColor: 'Black',

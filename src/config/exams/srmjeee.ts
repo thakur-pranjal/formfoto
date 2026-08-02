@@ -31,6 +31,7 @@ export const srmjeeeConfig: FormatConfig = {
       height: 531,
       minKb: 10,
       maxKb: 200,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPEG', 'JPG'],
         allowedFormatsNote: 'Recommended'

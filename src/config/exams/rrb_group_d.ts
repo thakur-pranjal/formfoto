@@ -31,6 +31,7 @@ export const rrb_group_dConfig: FormatConfig = {
       height: 531, // Calculated from 45mm at 300 DPI
       minKb: 30,
       maxKb: 70,
+    stampRequired: false,
       rules: {
         minimumDpi: 100,
         allowedFormats: ['JPG', 'JPEG'],
@@ -62,6 +63,7 @@ export const rrb_group_dConfig: FormatConfig = {
       height: 60, // Minimum specified in pixels
       minKb: 30,
       maxKb: 70,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         inkColor: 'Black ink pen only',

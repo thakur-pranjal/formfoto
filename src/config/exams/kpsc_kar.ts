@@ -31,6 +31,7 @@ export const kpsc_karConfig: FormatConfig = {
       height: 531, // 4.5 cm at 300 DPI (4.5 / 2.54 * 300 = 531.49)
       minKb: 10,
       maxKb: 200,
+    stampRequired: false,
       rules: {
         dpiPreferred: 200,
         allowedFormats: ['JPG', 'JPEG'],
@@ -61,6 +62,7 @@ export const kpsc_karConfig: FormatConfig = {
       height: 0,
       minKb: 10,
       maxKb: 70,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         inkColor: 'Black or dark blue ink pen',
@@ -79,6 +81,7 @@ export const kpsc_karConfig: FormatConfig = {
       height: 354, // 3 cm at 300 DPI (3 / 2.54 * 300 = 354.33)
       minKb: 10,
       maxKb: 50,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         colorRequirements: 'Black or blue ink',

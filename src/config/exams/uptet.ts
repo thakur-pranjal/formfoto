@@ -31,6 +31,7 @@ export const uptetConfig: FormatConfig = {
       height: 531, // Calculated for Standard Passport Size (4.5cm) at 300 DPI
       minKb: 20,
       maxKb: 50,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         backgroundColor: 'Light or white',
@@ -58,6 +59,7 @@ export const uptetConfig: FormatConfig = {
       height: 0, // Not specified in official payload
       minKb: 10,
       maxKb: 20,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         inkColor: 'Black',

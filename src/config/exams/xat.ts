@@ -31,6 +31,7 @@ export const xatConfig: FormatConfig = {
       height: 230,
       minKb: 20,
       maxKb: 50,
+    stampRequired: false,
       rules: {
         allowedFormats: ['.jpg', '.jpeg'],
         backgroundColor: 'Light-colored, preferably white',
@@ -53,6 +54,7 @@ export const xatConfig: FormatConfig = {
       height: 60,
       minKb: 10,
       maxKb: 20,
+    stampRequired: false,
       rules: {
         allowedFormats: ['.jpg', '.jpeg'],
         inkColor: 'Black',

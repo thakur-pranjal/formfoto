@@ -31,6 +31,7 @@ export const jee_advancedConfig: FormatConfig = {
       height: 0, 
       minKb: 4,
       maxKb: 100,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG'],
         uploadPortalConstraints: {
@@ -45,6 +46,7 @@ export const jee_advancedConfig: FormatConfig = {
       height: 0,
       minKb: 1,
       maxKb: 30,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG'],
         uploadPortalConstraints: {

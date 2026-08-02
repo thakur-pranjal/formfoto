@@ -31,6 +31,7 @@ export const bihar_stetConfig: FormatConfig = {
       height: 531, // 4.5 cm at 300 DPI
       minKb: 20,
       maxKb: 100,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         backgroundColor: 'White or Light-coloured background',
@@ -61,6 +62,7 @@ export const bihar_stetConfig: FormatConfig = {
       height: 0, // Not specified in official payload
       minKb: 10,
       maxKb: 50,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         inkColor: 'Black or Blue ink',

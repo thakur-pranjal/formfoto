@@ -31,6 +31,7 @@ export const reetConfig: FormatConfig = {
       height: 531, // 4.5 cm at 300 DPI
       minKb: 50,
       maxKb: 100,
+    stampRequired: false,
       rules: {
         minPixels: '240 x 320',
         maxPixels: '480 x 640',
@@ -60,6 +61,7 @@ export const reetConfig: FormatConfig = {
       height: 236, // 2 cm at 300 DPI
       minKb: 20,
       maxKb: 50,
+    stampRequired: false,
       rules: {
         minPixels: '280 x 80',
         maxPixels: '560 x 160',

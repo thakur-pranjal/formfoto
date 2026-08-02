@@ -58,36 +58,36 @@ const POPULAR_IDS = new Set([
 
 /** State-level exam IDs → display location */
 const STATE_MAP: Record<string, string> = {
-  ap_eapcet:                  "Andhra Pradesh",
-  ts_eamcet:                  "Telangana",
-  mht_cet:                    "Maharashtra",
-  mpsc:                       "Maharashtra",
-  mppsc:                      "Madhya Pradesh",
-  bpsc:                       "Bihar",
-  bihar_stet:                 "Bihar",
-  bihar_police_constable:     "Bihar",
-  kcet:                       "Karnataka",
-  kpsc_kar:                   "Karnataka",
-  kpsc_kerala:                "Kerala",
-  keam:                       "Kerala",
-  ktet:                       "Kerala",
-  gujcet:                     "Gujarat",
-  tnpsc:                      "Tamil Nadu",
-  uppsc:                      "Uttar Pradesh",
-  uptet:                      "Uttar Pradesh",
-  up_police_constable:        "Uttar Pradesh",
-  wbjee:                      "West Bengal",
-  ojee:                       "Odisha",
-  rpsc:                       "Rajasthan",
-  reet:                       "Rajasthan",
-  rajasthan_police:           "Rajasthan",
-  hpsc:                       "Himachal Pradesh",
-  hp_police_constable:        "Himachal Pradesh",
-  htet:                       "Haryana",
-  haryana_police_constable:   "Haryana",
-  maharashtra_police_bharti:  "Maharashtra",
-  mp_police_constable:        "Madhya Pradesh",
-  delhi_police_constable:     "Delhi",
+  ap_eapcet: "Andhra Pradesh",
+  ts_eamcet: "Telangana",
+  mht_cet: "Maharashtra",
+  mpsc: "Maharashtra",
+  mppsc: "Madhya Pradesh",
+  bpsc: "Bihar",
+  bihar_stet: "Bihar",
+  bihar_police_constable: "Bihar",
+  kcet: "Karnataka",
+  kpsc_kar: "Karnataka",
+  kpsc_kerala: "Kerala",
+  keam: "Kerala",
+  ktet: "Kerala",
+  gujcet: "Gujarat",
+  tnpsc: "Tamil Nadu",
+  uppsc: "Uttar Pradesh",
+  uptet: "Uttar Pradesh",
+  up_police_constable: "Uttar Pradesh",
+  wbjee: "West Bengal",
+  ojee: "Odisha",
+  rpsc: "Rajasthan",
+  reet: "Rajasthan",
+  rajasthan_police: "Rajasthan",
+  hpsc: "Himachal Pradesh",
+  hp_police_constable: "Himachal Pradesh",
+  htet: "Haryana",
+  haryana_police_constable: "Haryana",
+  maharashtra_police_bharti: "Maharashtra",
+  mp_police_constable: "Madhya Pradesh",
+  delhi_police_constable: "Delhi",
 };
 
 /** subCategory → broad Domain bucket */
@@ -97,21 +97,21 @@ function deriveDomain(sub: string): string {
     return "Engineering";
   if (s.includes("medical") || s.includes("postgraduate entrance") || s.includes("undergraduate entrance"))
     return "Medical";
-  if (s.includes("civil service"))              return "Civil Services";
-  if (s.includes("banking"))                    return "Banking";
-  if (s.includes("railway"))                    return "Railway";
+  if (s.includes("civil service")) return "Civil Services";
+  if (s.includes("banking")) return "Banking";
+  if (s.includes("railway")) return "Railway";
   if (s.includes("defence / police") || s.includes("defence")) return "Defence";
-  if (s.includes("police"))                     return "Police";
+  if (s.includes("police")) return "Police";
   if (s.includes("teaching") || s.includes("eligibility")) return "Teaching";
-  if (s.includes("law"))                        return "Law";
-  if (s.includes("management"))                 return "Management";
+  if (s.includes("law")) return "Law";
+  if (s.includes("management")) return "Management";
   if (s.includes("design") || s.includes("fashion")) return "Design & Fashion";
-  if (s.includes("hospitality"))                return "Hospitality";
+  if (s.includes("hospitality")) return "Hospitality";
   if (
     s.includes("government job") ||
     s.includes("state psc") ||
     s.includes("state public service")
-  )                                              return "Government Jobs";
+  ) return "Government Jobs";
   if (s.includes("research") || s.includes("fellowship")) return "Research";
   return "Government Jobs";
 }
@@ -152,13 +152,13 @@ type Exam = BaseExam & {
 const ALL_EXAMS: Exam[] = (FORMATS.filter((f) => f.category === "exam") as BaseExam[])
   .sort((a, b) => a.title.localeCompare(b.title))
   .map((f) => {
-    const sub      = ((f as any).subCategory ?? "General / Other").trim() as string;
+    const sub = ((f as any).subCategory ?? "General / Other").trim() as string;
     const location = STATE_MAP[f.id] ?? "National";
-    const domain   = deriveDomain(sub);
-    const level    = deriveLevel(sub, f.id);
+    const domain = deriveDomain(sub);
+    const level = deriveLevel(sub, f.id);
     return {
       ...f,
-      tags:      [domain, location, level],
+      tags: [domain, location, level],
       isPopular: POPULAR_IDS.has(f.id),
       location,
       domain,
@@ -273,11 +273,10 @@ function FilterModal({
                       key={option}
                       onClick={() => onToggle(group, option)}
                       aria-pressed={isActive}
-                      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all duration-150 ${
-                        isActive
+                      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all duration-150 ${isActive
                           ? "border-blue-500 bg-blue-500/20 text-blue-300 shadow-[0_0_0_1px_rgba(59,130,246,0.4)]"
                           : "border-slate-700 bg-slate-800/60 text-slate-400 hover:border-slate-500 hover:text-slate-200"
-                      }`}
+                        }`}
                     >
                       {isActive && <Check className="h-3 w-3 shrink-0" />}
                       {option}
@@ -309,11 +308,10 @@ function ExamCard({ exam, popular }: { exam: Exam; popular?: boolean }) {
   return (
     <Link
       href={`/exam/${exam.id}`}
-      className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl border p-5 backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg ${
-        popular
+      className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl border p-5 backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg ${popular
           ? "border-blue-500/30 bg-gradient-to-br from-blue-900/40 to-indigo-900/30 hover:border-blue-400/60 hover:shadow-blue-500/20"
           : "border-slate-700/60 bg-slate-800/40 hover:border-slate-600 hover:bg-slate-800/70 hover:shadow-black/20"
-      }`}
+        }`}
     >
       <div className="space-y-1.5">
         {popular && (
@@ -340,9 +338,8 @@ function ExamCard({ exam, popular }: { exam: Exam; popular?: boolean }) {
           )}
         </div>
         <ChevronRight
-          className={`h-4 w-4 shrink-0 transition-all group-hover:translate-x-0.5 ${
-            popular ? "text-blue-400" : "text-slate-600 group-hover:text-blue-400"
-          }`}
+          className={`h-4 w-4 shrink-0 transition-all group-hover:translate-x-0.5 ${popular ? "text-blue-400" : "text-slate-600 group-hover:text-blue-400"
+            }`}
         />
       </div>
     </Link>
@@ -370,14 +367,14 @@ function EmptyState({ query }: { query: string }) {
 
 const INITIAL_FILTERS: Record<FilterGroup, string[]> = {
   Location: [],
-  Domain:   [],
-  Level:    [],
+  Domain: [],
+  Level: [],
 };
 
 export default function ExamPage() {
-  const [searchQuery,   setSearchQuery]   = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [activeFilters, setActiveFilters] = useState<Record<FilterGroup, string[]>>(INITIAL_FILTERS);
-  const [filterOpen,    setFilterOpen]    = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
 
   // ── Derived ──────────────────────────────────────────────────────────────────
 
@@ -405,8 +402,8 @@ export default function ExamPage() {
       const selected = activeFilters[group];
       result = result.filter((e) => {
         if (group === "Location") return selected.includes(e.location);
-        if (group === "Domain")   return selected.includes(e.domain);
-        if (group === "Level")    return selected.includes(e.level);
+        if (group === "Domain") return selected.includes(e.domain);
+        if (group === "Level") return selected.includes(e.level);
         return true;
       });
     }
@@ -415,8 +412,8 @@ export default function ExamPage() {
   }, [searchQuery, activeFilters]);
 
   const popularExams = useMemo(() => filteredExams.filter((e) => e.isPopular), [filteredExams]);
-  const allExams     = useMemo(() => filteredExams.filter((e) => !e.isPopular), [filteredExams]);
-  const isFiltering  = searchQuery.trim().length > 0 || totalActiveFilters > 0;
+  const allExams = useMemo(() => filteredExams.filter((e) => !e.isPopular), [filteredExams]);
+  const isFiltering = searchQuery.trim().length > 0 || totalActiveFilters > 0;
 
   // ── Handlers ─────────────────────────────────────────────────────────────────
 
@@ -508,11 +505,10 @@ export default function ExamPage() {
             <button
               id="exam-filters-btn"
               onClick={() => setFilterOpen(true)}
-              className={`relative shrink-0 inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition-all duration-150 ${
-                totalActiveFilters > 0
+              className={`relative shrink-0 inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition-all duration-150 ${totalActiveFilters > 0
                   ? "border-blue-500 bg-blue-500/15 text-blue-300 shadow-[0_0_0_1px_rgba(59,130,246,0.4)]"
                   : "border-slate-700 bg-slate-800/60 text-slate-300 hover:border-slate-600 hover:text-white"
-              }`}
+                }`}
             >
               <SlidersHorizontal className="h-4 w-4" />
               Filters

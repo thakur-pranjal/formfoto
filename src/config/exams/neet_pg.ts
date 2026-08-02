@@ -31,6 +31,7 @@ export const neet_pgConfig: FormatConfig = {
       height: 531, // 4.5 cm calculated at 300 DPI
       minKb: 10,
       maxKb: 80,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         backgroundColor: 'White',
@@ -56,6 +57,7 @@ export const neet_pgConfig: FormatConfig = {
       height: 177, // 1.5 cm calculated at 300 DPI
       minKb: 10,
       maxKb: 80,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         backgroundColor: 'Blank white page without lines',
@@ -77,6 +79,7 @@ export const neet_pgConfig: FormatConfig = {
       height: 177, // 1.5 cm calculated at 300 DPI
       minKb: 10,
       maxKb: 80,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         backgroundColor: 'Blank white page without lines',

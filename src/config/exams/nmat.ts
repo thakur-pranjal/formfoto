@@ -31,6 +31,7 @@ export const nmatConfig: FormatConfig = {
       height: 531,
       minKb: 10,
       maxKb: 1024,
+    stampRequired: false,
       rules: {
         allowedFormats: ['.jpg', '.jpeg', '.png', '.gif'],
         backgroundColor: 'White or lightly colored background',

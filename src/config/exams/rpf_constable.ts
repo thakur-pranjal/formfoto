@@ -31,6 +31,7 @@ export const rpf_constableConfig: FormatConfig = {
       height: 531, // Standard passport 45mm calculated at 300 DPI
       minKb: 30,
       maxKb: 70,
+    stampRequired: false,
       rules: {
         minimumDpi: 100,
         allowedFormats: ['JPG', 'JPEG'],
@@ -62,6 +63,7 @@ export const rpf_constableConfig: FormatConfig = {
       height: 236, // 20mm scan box calculated at 300 DPI
       minKb: 30,
       maxKb: 70,
+    stampRequired: false,
       rules: {
         minPixelWidth: 140,
         minPixelHeight: 60,

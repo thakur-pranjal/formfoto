@@ -31,6 +31,7 @@ export const afcatConfig: FormatConfig = {
       height: 0,
       minKb: 100,
       maxKb: 200,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         backgroundColor: 'Light / Plain White',
@@ -57,6 +58,7 @@ export const afcatConfig: FormatConfig = {
       height: 0,
       minKb: 80,
       maxKb: 150,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         inkColor: 'Black ink',
@@ -75,6 +77,7 @@ export const afcatConfig: FormatConfig = {
       height: 0,
       minKb: 50,
       maxKb: 100,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         colorRequirements: 'Created by pressing on ink stamp pad',

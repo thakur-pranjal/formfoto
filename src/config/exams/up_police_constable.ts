@@ -31,6 +31,7 @@ export const up_police_constableConfig: FormatConfig = {
       height: 225,
       minKb: 20,
       maxKb: 50,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         backgroundColor: 'White or light-gray preferred',
@@ -62,6 +63,7 @@ export const up_police_constableConfig: FormatConfig = {
       height: 80,
       minKb: 5,
       maxKb: 20,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         inkColor: 'Black ink',

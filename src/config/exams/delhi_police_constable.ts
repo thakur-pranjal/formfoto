@@ -31,6 +31,7 @@ export const delhi_police_constableConfig: FormatConfig = {
       height: 0,
       minKb: 10,
       maxKb: 50,
+    stampRequired: false,
       rules: {
         allowedFormats: ['Live Photo'],
         backgroundColor: 'Plain / Light background',
@@ -59,6 +60,7 @@ export const delhi_police_constableConfig: FormatConfig = {
       height: 236, // 2.0 cm calculated at 300 DPI (2.0 / 2.54 * 300)
       minKb: 10,
       maxKb: 20,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPEG', 'JPG'],
         inkColor: 'Black or Blue ink',

@@ -31,6 +31,7 @@ export const keamConfig: FormatConfig = {
       height: 200,
       minKb: 1,
       maxKb: 100,
+    stampRequired: false,
       rules: {
         aspectRatio: '3:4',
         allowedFormats: ['JPG', 'JPEG'],
@@ -56,6 +57,7 @@ export const keamConfig: FormatConfig = {
       height: 100,
       minKb: 1,
       maxKb: 100,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG'],
         inkColor: 'Black or Blue ink',

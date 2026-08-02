@@ -31,6 +31,7 @@ export const bihar_police_constableConfig: FormatConfig = {
       height: 531, // 4.5 cm at 300 DPI (4.5 / 2.54 * 300)
       minKb: 10,
       maxKb: 25,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG', 'PNG'],
         backgroundColor: 'White background',
@@ -60,6 +61,7 @@ export const bihar_police_constableConfig: FormatConfig = {
       height: 236, // 2.0 cm at 300 DPI (2.0 / 2.54 * 300)
       minKb: 10,
       maxKb: 25,
+    stampRequired: false,
       rules: {
         allowedFormats: ['JPG', 'JPEG', 'PNG'],
         inkColor: 'Black or Blue ink',
