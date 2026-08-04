@@ -28,6 +28,7 @@ import {
   Type,
   Palette,
   ScanFace,
+  HelpCircle,
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import { type FormatConfig } from "@/config/formats";
@@ -183,6 +184,7 @@ export default function SmartEditor({ config }: SmartEditorProps) {
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);  
   const [finalSizeKb, setFinalSizeKb] = useState<number | null>(null);  
   const [estimatedFileSize, setEstimatedFileSize] = useState("—");
+  const [showInfoPopover, setShowInfoPopover] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isRemovingBg, setIsRemovingBg] = useState(false);
   const [removeBgStage, setRemoveBgStage] = useState<
@@ -578,7 +580,7 @@ export default function SmartEditor({ config }: SmartEditorProps) {
                   key={doc.id}
                   type="button"
                   onClick={() => setActiveDocIndex(index)}
-                  className={`flex-1 rounded-xl px-4 py-2 text-sm font-semibold transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
+                  className={`flex-1 cursor-pointer rounded-xl px-4 py-2 text-sm font-semibold select-none transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
                     activeDocIndex === index
                       ? "bg-blue-600 text-white shadow-md shadow-blue-500/25"
                       : "text-slate-400 hover:bg-slate-700/60 hover:text-slate-200"
@@ -741,7 +743,7 @@ export default function SmartEditor({ config }: SmartEditorProps) {
                     type="button"
                     onClick={handleSmartCrop}
                     title="Detect face and snap crop box to optimal biometric framing"
-                    className="absolute right-3 top-3 inline-flex items-center gap-2 rounded-xl border border-violet-500/40 bg-slate-900/80 px-3 py-2 text-xs font-semibold text-violet-300 shadow-lg shadow-violet-500/10 backdrop-blur-sm transition hover:border-violet-400 hover:bg-violet-500/20 hover:text-violet-200 hover:shadow-violet-500/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
+                    className="absolute right-3 top-3 inline-flex cursor-pointer select-none items-center gap-2 rounded-xl border border-violet-500/40 bg-slate-900/80 px-3 py-2 text-xs font-semibold text-violet-300 shadow-lg shadow-violet-500/10 backdrop-blur-sm transition hover:border-violet-400 hover:bg-violet-500/20 hover:text-violet-200 hover:shadow-violet-500/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
                   >
                     <ScanFace className="h-4 w-4" />
                     <span className="hidden sm:inline">Auto-Center Biometrics</span>
@@ -762,16 +764,16 @@ export default function SmartEditor({ config }: SmartEditorProps) {
               {/* --- RIGHT SIDE: CONTROLS PANEL --- */}
               <div className="w-full xl:w-[340px] shrink-0 flex flex-col gap-4">
                 {/* Target size slider */}
-                <div className="rounded-2xl border border-slate-700 bg-slate-800/60 px-5 py-4 shadow-lg shadow-black/20">
+                <div className="relative rounded-2xl border border-slate-700 bg-slate-800/60 px-5 py-4 shadow-lg shadow-black/20">
                   <div className="mb-4 flex items-center justify-between gap-4">
                     <div className="space-y-0.5">
-                      <p className="text-sm font-semibold text-white">Target File Size</p>
-                      <p className="text-xs text-slate-500">
-                        Locked between {minKb}&thinsp;KB and {maxKb}&thinsp;KB
+                      <p className="select-none text-sm font-semibold text-white">Target Max Size</p>
+                      <p className="select-none text-xs text-slate-500 whitespace-nowrap">
+                        Limits: {minKb}&thinsp;–&thinsp;{maxKb}&thinsp;KB
                       </p>
                     </div>
-                    <span className="shrink-0 rounded-lg bg-blue-500/15 px-3 py-1.5 font-bold text-xl text-blue-300">
-                      {targetKb} KB
+                    <span className="select-none shrink-0 rounded-lg bg-blue-500/15 px-3 py-1.5 font-bold text-xl text-blue-300">
+                      Max {targetKb}&thinsp;KB
                     </span>
                   </div>
 
@@ -784,12 +786,87 @@ export default function SmartEditor({ config }: SmartEditorProps) {
                     value={targetKb}
                     onChange={(e) => setTargetKb(Math.round(Number(e.target.value)))}
                     disabled={!completedCrop}
-                    className="w-full accent-blue-500 disabled:opacity-40"
+                    className="w-full cursor-pointer accent-blue-500 disabled:cursor-not-allowed disabled:opacity-40"
                   />
 
-                  <div className="mt-1.5 flex justify-between text-xs text-slate-500">
+                  <div className="mt-1.5 flex select-none justify-between text-xs text-slate-500">
                     <span>{minKb}&thinsp;KB</span>
                     <span>{maxKb}&thinsp;KB</span>
+                  </div>
+
+                  {/* Live size estimation */}
+                  <div className="relative mt-4 flex min-h-[2.25rem] items-center justify-between rounded-lg border border-slate-700/60 bg-slate-900/50 px-3 py-2">
+                    {/* Label + info trigger */}
+                    <div className="flex items-center gap-1.5">
+                      <span className="select-none text-xs text-slate-500">Estimated Output</span>
+                      <button
+                        type="button"
+                        id="size-info-trigger"
+                        aria-label="Why is the size smaller?"
+                        onClick={() => setShowInfoPopover((v) => !v)}
+                        className="cursor-pointer text-slate-600 hover:text-blue-400 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-full"
+                      >
+                        <HelpCircle className="h-3 w-3" />
+                      </button>
+                    </div>
+
+                    {/* Value */}
+                    <span
+                      className={`select-none text-xs font-semibold tabular-nums ${
+                        estimatedFileSize === "—" || estimatedFileSize === "Awaiting crop..."
+                          ? "text-slate-500"
+                          : estimatedFileSize === "Estimating..."
+                          ? "text-amber-400 animate-pulse"
+                          : "text-emerald-400"
+                      }`}
+                    >
+                      {estimatedFileSize === "Estimating..."
+                        ? "Estimating…"
+                        : estimatedFileSize === "Awaiting crop..."
+                        ? "Awaiting crop…"
+                        : estimatedFileSize === "—"
+                        ? "—"
+                        : `~${estimatedFileSize.replace("≈", "").trim()}`}
+                    </span>
+
+                    {/* Info popover — opens upward to avoid viewport clipping */}
+                    {showInfoPopover && (
+                      <>
+                        <div
+                          className="fixed inset-0 z-10"
+                          onClick={() => setShowInfoPopover(false)}
+                          aria-hidden="true"
+                        />
+                        <div
+                          role="dialog"
+                          aria-modal="true"
+                          aria-labelledby="size-info-title"
+                          className="absolute bottom-full left-0 right-0 z-20 mb-2 rounded-xl border border-slate-600 bg-slate-900 p-4 shadow-2xl shadow-black/60"
+                        >
+                          <div className="flex items-start justify-between gap-3 mb-2">
+                            <h4
+                              id="size-info-title"
+                              className="select-none text-sm font-semibold text-white leading-snug"
+                            >
+                              Why isn&apos;t it the exact size?
+                            </h4>
+                            <button
+                              type="button"
+                              aria-label="Close"
+                              onClick={() => setShowInfoPopover(false)}
+                              className="cursor-pointer shrink-0 text-slate-500 hover:text-slate-300 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-full"
+                            >
+                              <span className="text-lg leading-none">&times;</span>
+                            </button>
+                          </div>
+                          <p className="text-xs leading-relaxed text-slate-400">
+                            Images shrink in steps, not exact numbers. We automatically pick the
+                            highest quality that stays safely under your limit so the exam website
+                            never rejects it.
+                          </p>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -802,10 +879,10 @@ export default function SmartEditor({ config }: SmartEditorProps) {
                           <Type className="h-4 w-4 text-amber-400" />
                         </div>
                         <div>
-                          <p className="text-sm font-semibold text-white">
+                          <p className="select-none text-sm font-semibold text-white">
                             Add Stamp
                           </p>
-                          <p className="text-xs text-slate-500">Required for this document</p>
+                          <p className="select-none text-xs text-slate-500">Required for this document</p>
                         </div>
                       </div>
                       {/* Toggle switch */}
@@ -858,8 +935,8 @@ export default function SmartEditor({ config }: SmartEditorProps) {
                       <Palette className="h-4 w-4 text-sky-400" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-white">Background</p>
-                      <p className="text-xs text-slate-500">Fills after BG removal</p>
+                      <p className="select-none text-sm font-semibold text-white">Background</p>
+                      <p className="select-none text-xs text-slate-500">Fills after BG removal</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
@@ -874,7 +951,7 @@ export default function SmartEditor({ config }: SmartEditorProps) {
                         title={label}
                         aria-label={`Set background to ${label}`}
                         onClick={() => setBgColor(color)}
-                        className={`h-8 w-8 rounded-full border-2 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
+                        className={`cursor-pointer h-8 w-8 rounded-full border-2 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
                           bgColor === color
                             ? "border-blue-400 ring-2 ring-blue-500 ring-offset-2 ring-offset-slate-800 scale-110"
                             : "border-slate-600 hover:border-slate-400 hover:scale-105"
@@ -891,7 +968,7 @@ export default function SmartEditor({ config }: SmartEditorProps) {
                     type="button"
                     onClick={handleRemoveBackground}
                     disabled={isRemovingBg}
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-800 px-5 py-2.5 text-sm font-semibold text-slate-200 shadow-sm transition hover:border-purple-500/50 hover:bg-slate-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex cursor-pointer select-none w-full items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-800 px-5 py-2.5 text-sm font-semibold text-slate-200 shadow-sm transition hover:border-purple-500/50 hover:bg-slate-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {removeBgStage !== "idle" ? (
                       <span className="h-4 w-4 rounded-full border-2 border-transparent border-r-white border-t-white animate-spin" />
@@ -909,7 +986,7 @@ export default function SmartEditor({ config }: SmartEditorProps) {
                     type="button"
                     onClick={generateCroppedImage}
                     disabled={!completedCrop || processing}
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-500/25 transition hover:from-blue-500 hover:to-blue-400 hover:shadow-blue-500/40 disabled:cursor-not-allowed disabled:from-slate-600 disabled:to-slate-600 disabled:opacity-50 disabled:shadow-none"
+                    className="inline-flex cursor-pointer select-none w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-500/25 transition hover:from-blue-500 hover:to-blue-400 hover:shadow-blue-500/40 disabled:cursor-not-allowed disabled:from-slate-600 disabled:to-slate-600 disabled:opacity-50 disabled:shadow-none"
                   >
                     {processing ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -925,7 +1002,7 @@ export default function SmartEditor({ config }: SmartEditorProps) {
                   <div className="rounded-2xl border border-emerald-500/30 bg-slate-900/80 p-5 shadow-[0_0_30px_rgba(16,185,129,0.1)]">
                     <div className="flex items-center gap-2 mb-4">
                       <ShieldCheck className="h-5 w-5 text-emerald-400" />
-                      <h3 className="text-base font-bold text-white tracking-wide">
+                      <h3 className="select-none text-base font-bold text-white tracking-wide">
                         Pre-Flight Check
                       </h3>
                     </div>
@@ -951,7 +1028,7 @@ export default function SmartEditor({ config }: SmartEditorProps) {
                   <a
                     href={downloadUrl}
                     download={`${config.title.replace(/\s+/g, "_")}_${activeDoc.id}_FormFoto.jpg`}
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/25 transition hover:shadow-[0_0_28px_rgba(16,185,129,0.5)] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+                    className="inline-flex cursor-pointer select-none w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/25 transition hover:shadow-[0_0_28px_rgba(16,185,129,0.5)] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
                   >
                     <Download className="h-4 w-4" />
                     Download {docName}

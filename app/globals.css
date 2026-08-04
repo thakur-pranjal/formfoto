@@ -1,3 +1,34 @@
 @import "tailwindcss";
 
 @source "../src/**/*.{js,ts,jsx,tsx,mdx}";
+
+@layer base {
+
+    /* 1. Nuke the I-beam and highlighting globally for the entire app */
+    body {
+        @apply cursor-default select-none;
+    }
+
+    /* 2. Enforce the pointer finger for all interactive elements */
+    button,
+    a,
+    [role="button"],
+    input[type="range"],
+    input[type="checkbox"],
+    input[type="radio"],
+    select,
+    summary,
+    label {
+        @apply cursor-pointer;
+    }
+
+    /* 3. Whitelist the I-beam ONLY for actual text inputs and standard paragraphs */
+    input[type="text"],
+    input[type="number"],
+    input[type="email"],
+    textarea,
+    p,
+    article {
+        @apply cursor-text select-text;
+    }
+}
