@@ -109,6 +109,37 @@ const resizeForBgRemoval = async (source: string) => {
   return canvasToBlob(canvas, "image/jpeg", 0.8);
 };
 
+/**
+ * Extracts only the user's current crop region from the displayed <img> element
+ * and scales it down to at most MAX_BG_DIMENSION on its longest side before
+ * returning a JPEG Blob for the BG-removal model.
+ */
+const getCroppedBlob = async (
+  img: HTMLImageElement,
+  pixelCrop: PixelCrop
+): Promise<Blob> => {
+  const scaleX = img.naturalWidth / img.width;
+  const scaleY = img.naturalHeight / img.height;
+
+  const srcX = pixelCrop.x * scaleX;
+  const srcY = pixelCrop.y * scaleY;
+  const srcW = pixelCrop.width * scaleX;
+  const srcH = pixelCrop.height * scaleY;
+
+  const maxSide = Math.max(srcW, srcH);
+  const scale = maxSide > MAX_BG_DIMENSION ? MAX_BG_DIMENSION / maxSide : 1;
+  const outW = Math.round(srcW * scale) || 1;
+  const outH = Math.round(srcH * scale) || 1;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = outW;
+  canvas.height = outH;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas is not supported.");
+  ctx.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, outW, outH);
+  return canvasToBlob(canvas, "image/jpeg", 0.8);
+};
+
 const compositeTransparentOnWhite = async (blob: Blob) => {
   const img = await loadImageElement(blob);
   const width = img.naturalWidth || img.width;
@@ -336,13 +367,28 @@ export default function PhotoEditor({ mode: pageMode }: PhotoEditorProps = {}) {
     setError(null);
 
     try {
-      const resizedBlob = await resizeForBgRemoval(imageSrc);
+      // Prefer the cropped region so the ML model processes a much smaller payload.
+      // Fall back to the full (resized) image if no crop has been committed yet.
+      const inputBlob =
+        imgRef.current && completedCrop?.width && completedCrop?.height
+          ? await getCroppedBlob(imgRef.current, completedCrop)
+          : await resizeForBgRemoval(imageSrc);
+
       setRemoveBgStage("removing");
-      const bgRemovedBlob = await removeBackground(resizedBlob);
+      const bgRemovedBlob = await removeBackground(inputBlob);
       const dataUrl = await compositeTransparentOnWhite(bgRemovedBlob);
 
+      // The returned image IS already the cropped area, so reset the crop box
+      // to full coverage so the user doesn't end up with a mis-sized selection.
+      const fullCrop: PercentCrop = {
+        unit: "%",
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 100,
+      };
       setImageSrc(dataUrl);
-      setCrop(undefined);
+      setCrop(fullCrop);
       setCompletedCrop(undefined);
       setDownloadUrl(null);
     } catch (err) {
@@ -353,7 +399,7 @@ export default function PhotoEditor({ mode: pageMode }: PhotoEditorProps = {}) {
       setIsRemovingBg(false);
       setRemoveBgStage("idle");
     }
-  }, [imageSrc]);
+  }, [imageSrc, completedCrop]);
 
   const renderCanvas = useCallback(() => {
     if (!imgRef.current || !completedCrop) return null;
@@ -777,7 +823,7 @@ export default function PhotoEditor({ mode: pageMode }: PhotoEditorProps = {}) {
 
       {imageSrc && (
         <div className="space-y-4">
-          <div className="relative w-full overflow-hidden rounded-2xl border border-slate-700 bg-slate-900/40">
+          <div className="relative w-full overflow-hidden rounded-2xl border border-white/8 bg-[#0f172a] shadow-2xl">
             <ReactCrop
               crop={crop}
               onChange={(_c, percentCrop) => setCrop(percentCrop)}

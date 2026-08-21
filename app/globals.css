@@ -4,12 +4,14 @@
 
 @layer base {
 
-    /* 1. Nuke the I-beam and highlighting globally for the entire app */
-    body {
+    /* 1. NUKE IT ALL: No I-beams, no highlighting anywhere */
+    *,
+    *::before,
+    *::after {
         @apply cursor-default select-none;
     }
 
-    /* 2. Enforce the pointer finger for all interactive elements */
+    /* 2. BRING BACK THE FINGER: For clickable UI elements AND everything inside them */
     button,
     a,
     [role="button"],
@@ -18,17 +20,21 @@
     input[type="radio"],
     select,
     summary,
-    label {
+    label,
+    [role="tab"],
+    button *,
+    a *,
+    [role="button"] *,
+    label *,
+    [role="tab"] * {
         @apply cursor-pointer;
     }
 
-    /* 3. Whitelist the I-beam ONLY for actual text inputs and standard paragraphs */
+    /* 3. BRING BACK THE I-BEAM: ONLY for actual typing fields */
     input[type="text"],
     input[type="number"],
     input[type="email"],
-    textarea,
-    p,
-    article {
+    textarea {
         @apply cursor-text select-text;
     }
 }

@@ -112,6 +112,37 @@ const resizeForBgRemoval = async (source: string) => {
   return canvasToBlob(canvas, "image/jpeg", 0.8);
 };
 
+/**
+ * Extracts only the user's current crop region from the displayed <img> element
+ * and scales it down to at most MAX_BG_DIMENSION on its longest side before
+ * returning a JPEG Blob for the BG-removal model.
+ */
+const getCroppedBlob = async (
+  img: HTMLImageElement,
+  pixelCrop: PixelCrop
+): Promise<Blob> => {
+  const scaleX = img.naturalWidth / img.width;
+  const scaleY = img.naturalHeight / img.height;
+
+  const srcX = pixelCrop.x * scaleX;
+  const srcY = pixelCrop.y * scaleY;
+  const srcW = pixelCrop.width * scaleX;
+  const srcH = pixelCrop.height * scaleY;
+
+  const maxSide = Math.max(srcW, srcH);
+  const scale = maxSide > MAX_BG_DIMENSION ? MAX_BG_DIMENSION / maxSide : 1;
+  const outW = Math.round(srcW * scale) || 1;
+  const outH = Math.round(srcH * scale) || 1;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = outW;
+  canvas.height = outH;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas is not supported.");
+  ctx.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, outW, outH);
+  return canvasToBlob(canvas, "image/jpeg", 0.8);
+};
+
 const blobToTransparentDataUrl = async (blob: Blob) => {
   const img = await loadImageElement(blob);
   const width = img.naturalWidth || img.width;
@@ -130,7 +161,7 @@ const blobToTransparentDataUrl = async (blob: Blob) => {
 // Sub-components
 // ---------------------------------------------------------------------------
 
-const AIProcessingOverlay = () => (
+const AIProcessingOverlay = ({ loadingText }: { loadingText: string }) => (
   <div className="absolute inset-0 z-50 flex flex-col items-center justify-center overflow-hidden bg-black/40 backdrop-blur-sm">
     <div className="pointer-events-none absolute inset-0">
       <div
@@ -144,8 +175,8 @@ const AIProcessingOverlay = () => (
         style={{ animationDuration: "2.4s" }}
       />
     </div>
-    <p className="mt-4 text-sm font-medium tracking-wide text-white/80 animate-bounce">
-      Processing Image...
+    <p key={loadingText} className="mt-4 text-sm font-medium tracking-wide text-white/90 animate-bounce">
+      {loadingText}
     </p>
     <style jsx>{`
       @keyframes smart-shimmer {
@@ -190,6 +221,8 @@ export default function SmartEditor({ config }: SmartEditorProps) {
   const [removeBgStage, setRemoveBgStage] = useState<
     "idle" | "optimizing" | "removing"
   >("idle");
+  // Dynamic loading text cycling during BG removal
+  const [loadingText, setLoadingText] = useState("Processing Image...");
 
   // Background color state
   const [bgColor, setBgColor] = useState("#FFFFFF");
@@ -478,13 +511,38 @@ export default function SmartEditor({ config }: SmartEditorProps) {
     setRemoveBgStage("optimizing");
     setError(null);
 
+    // Cycle through psychological loading messages every 1.5 s
+    const phrases = ["Analyzing biometrics...", "Extracting foreground...", "Refining edges..."];
+    let step = 0;
+    setLoadingText(phrases[0]);
+    const textInterval = setInterval(() => {
+      step++;
+      setLoadingText(phrases[step % phrases.length]);
+    }, 1500);
+
     try {
-      const resizedBlob = await resizeForBgRemoval(imageSrc);
+      // Prefer the cropped region so the ML model processes a much smaller payload.
+      // Fall back to the full (resized) image if no crop has been committed yet.
+      const inputBlob =
+        imgRef.current && completedCrop?.width && completedCrop?.height
+          ? await getCroppedBlob(imgRef.current, completedCrop)
+          : await resizeForBgRemoval(imageSrc);
+
       setRemoveBgStage("removing");
-      const bgRemovedBlob = await removeBackground(resizedBlob);
+      const bgRemovedBlob = await removeBackground(inputBlob);
       const dataUrl = await blobToTransparentDataUrl(bgRemovedBlob);
+
+      // The returned image IS already the cropped area, so reset the crop box
+      // to full coverage so the user doesn't end up with a mis-sized selection.
+      const fullCrop: PercentCrop = {
+        unit: "%",
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 100,
+      };
       setImageSrc(dataUrl);
-      setCrop(undefined);
+      setCrop(fullCrop);
       setCompletedCrop(undefined);
       setDownloadUrl(null);
       setFinalSizeKb(null);
@@ -492,10 +550,12 @@ export default function SmartEditor({ config }: SmartEditorProps) {
       console.error(err);
       setError("Failed to remove background. Please try again.");
     } finally {
+      clearInterval(textInterval);
+      setLoadingText("Processing Image...");
       setIsRemovingBg(false);
       setRemoveBgStage("idle");
     }
-  }, [imageSrc]);
+  }, [imageSrc, completedCrop]);
 
   // -------------------------------------------------------------------------
   // Process (generate final image)
@@ -661,6 +721,8 @@ export default function SmartEditor({ config }: SmartEditorProps) {
             /* -------- Pre-upload: premium dropzone -------- */
             <div
               {...getRootProps()}
+              role="button"
+              tabIndex={0}
               className={`group relative flex min-h-[420px] flex-1 cursor-pointer flex-col items-center justify-center gap-5 rounded-2xl border-2 border-dashed p-10 text-center transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 ${
                 isDragActive
                   ? "border-blue-400 bg-blue-500/10 shadow-[0_0_60px_rgba(59,130,246,0.2)]"
@@ -718,32 +780,40 @@ export default function SmartEditor({ config }: SmartEditorProps) {
               
               {/* --- LEFT SIDE: CROP AREA --- */}
               <div className="flex flex-col gap-4 w-full flex-1 min-w-0">
-                {/* Crop canvas */}
-                <div className="relative w-full overflow-hidden flex-1 bg-black/20 rounded-3xl border border-slate-700/50 flex items-center justify-center p-4 sm:p-8 min-h-[500px]">
-                  <ReactCrop
-                    crop={crop}
-                    onChange={(_c, percentCrop) => setCrop(percentCrop)}
-                    onComplete={(c) => setCompletedCrop(c)}
-                    aspect={aspectRatio}
-                    keepSelection
-                    className="w-full flex justify-center"
+                {/* Crop canvas — two-layer structure:
+                     outer: dark presentation card (no bg color, no padding)
+                     inner: dynamic bgColor fill (preserves transparency preview) */}
+                <div className="relative w-full overflow-hidden flex-1 rounded-2xl border border-white/8 bg-[#0f172a] shadow-2xl min-h-[500px]">
+                  {/* Inner layer: only this element gets the dynamic background color */}
+                  <div
+                    className="w-full h-full min-h-[500px] flex items-center justify-center overflow-hidden transition-colors duration-300"
+                    style={{ backgroundColor: bgColor }}
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={imageSrc}
-                      alt="Upload preview"
-                      onLoad={onImageLoad}
-                      className="max-h-[70vh] w-auto object-contain drop-shadow-2xl"
-                    />
-                  </ReactCrop>
-                  {isRemovingBg && <AIProcessingOverlay />}
+                    <ReactCrop
+                      crop={crop}
+                      onChange={(_c, percentCrop) => setCrop(percentCrop)}
+                      onComplete={(c) => setCompletedCrop(c)}
+                      aspect={aspectRatio}
+                      keepSelection
+                      className="w-full flex justify-center"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={imageSrc}
+                        alt="Upload preview"
+                        onLoad={onImageLoad}
+                        className="max-h-[70vh] w-auto object-contain drop-shadow-2xl"
+                      />
+                    </ReactCrop>
+                    {isRemovingBg && <AIProcessingOverlay loadingText={loadingText} />}
+                  </div>
 
-                  {/* Auto-Center Biometrics button — floats over the crop preview */}
+                  {/* Auto-Center Biometrics button — sits in the outer card, clear of borders */}
                   <button
                     type="button"
                     onClick={handleSmartCrop}
                     title="Detect face and snap crop box to optimal biometric framing"
-                    className="absolute right-3 top-3 inline-flex cursor-pointer select-none items-center gap-2 rounded-xl border border-violet-500/40 bg-slate-900/80 px-3 py-2 text-xs font-semibold text-violet-300 shadow-lg shadow-violet-500/10 backdrop-blur-sm transition hover:border-violet-400 hover:bg-violet-500/20 hover:text-violet-200 hover:shadow-violet-500/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
+                    className="absolute right-4 top-4 inline-flex cursor-pointer select-none items-center gap-2 rounded-xl border border-violet-500/40 bg-slate-900/80 px-3 py-2 text-xs font-semibold text-violet-300 shadow-lg shadow-violet-500/10 backdrop-blur-sm transition hover:border-violet-400 hover:bg-violet-500/20 hover:text-violet-200 hover:shadow-violet-500/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
                   >
                     <ScanFace className="h-4 w-4" />
                     <span className="hidden sm:inline">Auto-Center Biometrics</span>

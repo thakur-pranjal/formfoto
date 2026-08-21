@@ -15,7 +15,7 @@ import ReactCrop, {
   type PercentCrop,
 } from "react-image-crop";
 import { removeBackground } from "@imgly/background-removal";
-import { Download, Upload, Image as ImageIcon, Loader2 } from "lucide-react";
+import { Download, Upload, Image as ImageIcon, Loader2, Palette } from "lucide-react";
 import "react-image-crop/dist/ReactCrop.css";
 
 // ---------------------------------------------------------------------------
@@ -37,6 +37,22 @@ function centerAspectCrop(
 }
 
 const MAX_BG_DIMENSION = 1024;
+
+// Dynamic loading messages for psychological UX during BG removal
+const BG_REMOVAL_STEPS = [
+  "Analyzing subject...",
+  "Extracting foreground...",
+  "Refining edges...",
+];
+
+// Background color swatches for live canvas preview
+const BG_COLOR_SWATCHES = [
+  { label: "White",       value: "#ffffff",  tw: "bg-white border-slate-300" },
+  { label: "Light gray",  value: "#f1f5f9",  tw: "bg-slate-100 border-slate-300" },
+  { label: "Black",       value: "#000000",  tw: "bg-black border-slate-600" },
+  { label: "Navy",        value: "#0f172a",  tw: "bg-slate-900 border-slate-600" },
+  { label: "Transparent", value: "transparent", tw: "border-slate-600" },
+];
 
 const loadImageElement = (input: string | Blob): Promise<HTMLImageElement> =>
   new Promise((resolve, reject) => {
@@ -97,6 +113,37 @@ const resizeForBgRemoval = async (source: string): Promise<Blob> => {
   return canvasToBlob(canvas, "image/jpeg", 0.8);
 };
 
+/**
+ * Extracts only the user's current crop region from the displayed <img> element
+ * and scales it down to at most MAX_BG_DIMENSION on its longest side before
+ * returning a JPEG Blob for the BG-removal model.
+ */
+const getCroppedBlob = async (
+  img: HTMLImageElement,
+  pixelCrop: PixelCrop
+): Promise<Blob> => {
+  const scaleX = img.naturalWidth / img.width;
+  const scaleY = img.naturalHeight / img.height;
+
+  const srcX = pixelCrop.x * scaleX;
+  const srcY = pixelCrop.y * scaleY;
+  const srcW = pixelCrop.width * scaleX;
+  const srcH = pixelCrop.height * scaleY;
+
+  const maxSide = Math.max(srcW, srcH);
+  const scale = maxSide > MAX_BG_DIMENSION ? MAX_BG_DIMENSION / maxSide : 1;
+  const outW = Math.round(srcW * scale) || 1;
+  const outH = Math.round(srcH * scale) || 1;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = outW;
+  canvas.height = outH;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas is not supported.");
+  ctx.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, outW, outH);
+  return canvasToBlob(canvas, "image/jpeg", 0.8);
+};
+
 const compositeTransparentOnWhite = async (blob: Blob): Promise<string> => {
   const img = await loadImageElement(blob);
   const width = img.naturalWidth || img.width;
@@ -116,7 +163,7 @@ const compositeTransparentOnWhite = async (blob: Blob): Promise<string> => {
 // AI Processing Overlay
 // ---------------------------------------------------------------------------
 
-const AIProcessingOverlay = () => (
+const AIProcessingOverlay = ({ stepText }: { stepText: string }) => (
   <div className="absolute inset-0 z-50 flex flex-col items-center justify-center overflow-hidden bg-black/40 backdrop-blur-sm transition-all duration-500">
     <div className="pointer-events-none absolute inset-0">
       <div
@@ -130,8 +177,12 @@ const AIProcessingOverlay = () => (
         style={{ animationDuration: "2.4s" }}
       />
     </div>
-    <p className="mt-4 text-sm font-medium tracking-wide text-white/80 animate-bounce">
-      Processing Image...
+    <p
+      key={stepText}
+      className="mt-4 text-sm font-medium tracking-wide text-white/90 animate-bounce"
+      style={{ transition: "opacity 0.4s ease" }}
+    >
+      {stepText}
     </p>
     <style jsx>{`
       @keyframes ai-shimmer {
@@ -172,10 +223,14 @@ export default function ManualEditor({ presetConfig }: { presetConfig?: PresetCo
   const [removeBgStage, setRemoveBgStage] = useState<
     "idle" | "optimizing" | "removing"
   >("idle");
+  // Dynamic loading step text cycling during BG removal
+  const [bgRemovalStep, setBgRemovalStep] = useState(BG_REMOVAL_STEPS[0]);
   // true when the user's target KB exceeds what quality:1.0 can physically produce
   const [estimateCapped, setEstimateCapped] = useState(false);
   // Output format toggle
   const [outputFormat, setOutputFormat] = useState<"image/jpeg" | "image/png">("image/jpeg");
+  // Live canvas background color for transparent-image preview
+  const [selectedBackgroundColor, setSelectedBackgroundColor] = useState("#ffffff");
 
   const imgRef = useRef<HTMLImageElement | null>(null);
 
@@ -242,24 +297,51 @@ export default function ManualEditor({ presetConfig }: { presetConfig?: PresetCo
     if (!imageSrc) return;
     setIsRemovingBg(true);
     setRemoveBgStage("optimizing");
+    setBgRemovalStep(BG_REMOVAL_STEPS[0]);
     setError(null);
+
+    // Cycle through psychological loading messages every 1.5 s
+    let stepIndex = 0;
+    const stepInterval = setInterval(() => {
+      stepIndex = (stepIndex + 1) % BG_REMOVAL_STEPS.length;
+      setBgRemovalStep(BG_REMOVAL_STEPS[stepIndex]);
+    }, 1500);
+
     try {
-      const resizedBlob = await resizeForBgRemoval(imageSrc);
+      // Prefer the cropped region so the ML model processes a much smaller payload.
+      // Fall back to the full (resized) image if no crop has been committed yet.
+      const inputBlob =
+        imgRef.current && completedCrop?.width && completedCrop?.height
+          ? await getCroppedBlob(imgRef.current, completedCrop)
+          : await resizeForBgRemoval(imageSrc);
+
       setRemoveBgStage("removing");
-      const bgRemovedBlob = await removeBackground(resizedBlob);
-      const dataUrl = await compositeTransparentOnWhite(bgRemovedBlob);
-      setImageSrc(dataUrl);
-      setCrop(undefined);
+      const bgRemovedBlob = await removeBackground(inputBlob);
+      // Keep the image transparent (PNG) so the canvas background color bleeds through
+      const objectUrl = URL.createObjectURL(bgRemovedBlob);
+
+      // The returned image IS already the cropped area, so reset the crop box
+      // to full coverage so the user doesn't end up with a mis-sized selection.
+      const fullCrop: PercentCrop = {
+        unit: "%",
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 100,
+      };
+      setImageSrc(objectUrl);
+      setCrop(fullCrop);
       setCompletedCrop(undefined);
       setDownloadUrl(null);
     } catch (err) {
       console.error(err);
       setError("Failed to remove background. Please try again.");
     } finally {
+      clearInterval(stepInterval);
       setIsRemovingBg(false);
       setRemoveBgStage("idle");
     }
-  }, [imageSrc]);
+  }, [imageSrc, completedCrop]);
 
   // ---------------------------------------------------------------------------
   // Canvas render — crops to exactly targetWidth × targetHeight
@@ -485,31 +567,71 @@ export default function ManualEditor({ presetConfig }: { presetConfig?: PresetCo
       </div>
 
       {/* ── Output Format Toggle ── */}
-      <div className="flex items-center gap-3">
-        <span className="text-xs font-medium text-slate-300 uppercase tracking-wider">Format</span>
-        <div className="flex overflow-hidden rounded-lg border border-slate-600">
-          <button
-            type="button"
-            onClick={() => setOutputFormat("image/jpeg")}
-            className={`px-4 py-1.5 text-sm font-medium transition-colors ${
-              outputFormat === "image/jpeg"
-                ? "bg-blue-600 text-white"
-                : "bg-slate-900/70 text-slate-400 hover:text-slate-200"
-            }`}
-          >
-            JPG
-          </button>
-          <button
-            type="button"
-            onClick={() => setOutputFormat("image/png")}
-            className={`px-4 py-1.5 text-sm font-medium transition-colors ${
-              outputFormat === "image/png"
-                ? "bg-blue-600 text-white"
-                : "bg-slate-900/70 text-slate-400 hover:text-slate-200"
-            }`}
-          >
-            PNG
-          </button>
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-medium text-slate-300 uppercase tracking-wider">Format</span>
+          <div className="flex overflow-hidden rounded-lg border border-slate-600">
+            <button
+              type="button"
+              onClick={() => setOutputFormat("image/jpeg")}
+              className={`px-4 py-1.5 text-sm font-medium transition-colors ${
+                outputFormat === "image/jpeg"
+                  ? "bg-blue-600 text-white"
+                  : "bg-slate-900/70 text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              JPG
+            </button>
+            <button
+              type="button"
+              onClick={() => setOutputFormat("image/png")}
+              className={`px-4 py-1.5 text-sm font-medium transition-colors ${
+                outputFormat === "image/png"
+                  ? "bg-blue-600 text-white"
+                  : "bg-slate-900/70 text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              PNG
+            </button>
+          </div>
+        </div>
+
+        {/* ── Background Color Picker ── */}
+        <div className="flex items-center gap-2.5">
+          <Palette className="h-3.5 w-3.5 text-slate-400" />
+          <span className="text-xs font-medium text-slate-300 uppercase tracking-wider">BG Color</span>
+          <div className="flex items-center gap-1.5">
+            {BG_COLOR_SWATCHES.map((swatch) => (
+              <button
+                key={swatch.value}
+                type="button"
+                title={swatch.label}
+                onClick={() => setSelectedBackgroundColor(swatch.value)}
+                className={`h-6 w-6 rounded-full border-2 transition-all hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-400 ${
+                  swatch.tw
+                } ${
+                  selectedBackgroundColor === swatch.value
+                    ? "ring-2 ring-blue-400 ring-offset-1 ring-offset-slate-800 scale-110"
+                    : ""
+                } ${
+                  swatch.value === "transparent"
+                    ? "bg-[conic-gradient(#cbd5e1_25%,#fff_0_50%,#cbd5e1_0_75%,#fff_0)] bg-[length:8px_8px]"
+                    : ""
+                }`}
+                style={swatch.value !== "transparent" ? { backgroundColor: swatch.value } : {}}
+              />
+            ))}
+            {/* Free-pick color input */}
+            <label title="Custom color" className="relative h-6 w-6 rounded-full border-2 border-dashed border-slate-500 overflow-hidden hover:scale-110 transition-transform cursor-pointer">
+              <input
+                type="color"
+                className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                value={selectedBackgroundColor === "transparent" ? "#ffffff" : selectedBackgroundColor}
+                onChange={(e) => setSelectedBackgroundColor(e.target.value)}
+              />
+              <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-slate-400">+</span>
+            </label>
+          </div>
         </div>
       </div>
 
@@ -649,25 +771,43 @@ export default function ManualEditor({ presetConfig }: { presetConfig?: PresetCo
       {imageSrc && (
         <div className="space-y-4">
 
-          {/* ReactCrop canvas */}
-          <div className="relative w-full overflow-hidden rounded-2xl border border-slate-700 bg-slate-900/40">
-            <ReactCrop
-              crop={crop}
-              onChange={(_c, percentCrop) => setCrop(percentCrop)}
-              onComplete={(c) => setCompletedCrop(c)}
-              aspect={aspectRatio}
-              keepSelection
-              className="max-h-[70vh]"
+          {/* ReactCrop canvas — two-layer structure:
+               outer: dark presentation card (no style, no padding)
+               inner: dynamic background color/pattern (inline style preserved) */}
+          <div className="relative w-full overflow-hidden rounded-2xl border border-white/8 bg-[#0f172a] shadow-2xl">
+            <div
+              className="w-full transition-colors duration-300"
+              style={{
+                backgroundColor:
+                  selectedBackgroundColor === "transparent"
+                    ? undefined
+                    : selectedBackgroundColor,
+                backgroundImage:
+                  selectedBackgroundColor === "transparent"
+                    ? "conic-gradient(#475569 25%, #334155 0 50%, #475569 0 75%, #334155 0)"
+                    : undefined,
+                backgroundSize:
+                  selectedBackgroundColor === "transparent" ? "16px 16px" : undefined,
+              }}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={imageSrc}
-                alt="Upload preview"
-                onLoad={onImageLoad}
-                className="max-h-[70vh] object-contain"
-              />
-            </ReactCrop>
-            {isRemovingBg && <AIProcessingOverlay />}
+              <ReactCrop
+                crop={crop}
+                onChange={(_c, percentCrop) => setCrop(percentCrop)}
+                onComplete={(c) => setCompletedCrop(c)}
+                aspect={aspectRatio}
+                keepSelection
+                className="max-h-[70vh]"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={imageSrc}
+                  alt="Upload preview"
+                  onLoad={onImageLoad}
+                  className="max-h-[70vh] object-contain"
+                />
+              </ReactCrop>
+              {isRemovingBg && <AIProcessingOverlay stepText={bgRemovalStep} />}
+            </div>
           </div>
 
           {/* Action row */}
