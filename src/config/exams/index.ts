@@ -174,7 +174,7 @@ export const examStandards = [
   xatConfig,
 ];
 
-export const getExamConfigById = (slug) => {
+export const getExamConfigById = (slug: string) => {
   return examStandards.find(
     (item) => item.id.toLowerCase() === slug.toLowerCase()
   );
