@@ -2,9 +2,7 @@
 import { VisaPassportConfig } from './types';
 
 
-export const visaStandards: VisaPassportConfig[] = [
-,
-];
+export const visaStandards: VisaPassportConfig[] = [];
 
 export const getVisaConfigById = (slug: string): VisaPassportConfig | undefined =>
   visaStandards.find((item) => item.id.toLowerCase() === slug.toLowerCase());

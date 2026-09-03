@@ -26,10 +26,9 @@ files.forEach(file => {
 });
 
 // 3. Construct the barrel file
+const arrayBody = arrayItems.length > 0 ? `\n${arrayItems.join(',\n')}\n` : '';
 const output = `${importLines}
-export const passportStandards: VisaPassportConfig[] = [
-${arrayItems.join(',\n')},
-];
+export const passportStandards: VisaPassportConfig[] = [${arrayBody}];
 
 export const getPassportConfigById = (slug: string): VisaPassportConfig | undefined =>
   passportStandards.find((item) => item.id.toLowerCase() === slug.toLowerCase());
