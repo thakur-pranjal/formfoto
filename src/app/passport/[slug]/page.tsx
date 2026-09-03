@@ -35,7 +35,7 @@ export default async function PassportSpokePage({ params }: PageProps) {
     const config = getPassportConfigById(slug);
 
     if (!config) {
-        notFound();
+        return notFound();
     }
 
     return (

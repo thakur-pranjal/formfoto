@@ -126,7 +126,7 @@ export default async function VisaSpokePage({
 
         {/* ── Photo Editor ── */}
         <section className="relative z-10" aria-label="Photo editor">
-          <PhotoEditor mode="passport" />
+          <PhotoEditor mode="visa" config={config} />
         </section>
 
         {/* ── Specs Summary ── */}

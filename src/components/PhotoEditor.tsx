@@ -17,6 +17,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { EXAM_PRESETS, ExamPreset } from "@/lib/exam-presets";
+import { type VisaPassportConfig } from "@/config/visas/types";
 import "react-image-crop/dist/ReactCrop.css";
 
 const formatDisplayDate = (date: Date) => {
@@ -186,10 +187,11 @@ const AIProcessingOverlay = () => (
 );
 
 interface PhotoEditorProps {
-  mode?: "exam" | "passport";
+  mode?: "exam" | "passport" | "visa";
+  config?: VisaPassportConfig;
 }
 
-export default function PhotoEditor({ mode: pageMode }: PhotoEditorProps = {}) {
+export default function PhotoEditor({ mode: pageMode, config: passedConfig }: PhotoEditorProps = {}) {
   const [category, setCategory] = useState<"exam" | "passport">(
     pageMode === "passport" ? "passport" : "exam"
   );
