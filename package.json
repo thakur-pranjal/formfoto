@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "node buildIndex.js && next dev",
-    "build": "node buildIndex.js && next build",
+    "dev": "node buildIndex.js && node buildVisaIndex.js && node buildPassportIndex.js && next dev",
+    "build": "node buildIndex.js && node buildVisaIndex.js && node buildPassportIndex.js && next build",
     "start": "next start",
     "lint": "next lint"
   },

@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
-import { FORMATS } from '../../../src/config/formats';
-import SmartEditor from '../../../src/components/SmartEditor';
+import { FORMATS } from '@/config/formats';
+import SmartEditor from '@/components/SmartEditor';
 
 export async function generateStaticParams() {
   return FORMATS

@@ -1,9 +1,9 @@
-﻿"use client";
+"use client";
 
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Search, ChevronRight, SlidersHorizontal, X, Check } from "lucide-react";
-import { FORMATS } from "@/config/formats";
+import { examStandards as FORMATS } from "@/config/exams";
 
 // ── Filter Definitions ─────────────────────────────────────────────────────────
 
@@ -274,8 +274,8 @@ function FilterModal({
                       onClick={() => onToggle(group, option)}
                       aria-pressed={isActive}
                       className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all duration-150 ${isActive
-                          ? "border-blue-500 bg-blue-500/20 text-blue-300 shadow-[0_0_0_1px_rgba(59,130,246,0.4)]"
-                          : "border-slate-700 bg-slate-800/60 text-slate-400 hover:border-slate-500 hover:text-slate-200"
+                        ? "border-blue-500 bg-blue-500/20 text-blue-300 shadow-[0_0_0_1px_rgba(59,130,246,0.4)]"
+                        : "border-slate-700 bg-slate-800/60 text-slate-400 hover:border-slate-500 hover:text-slate-200"
                         }`}
                     >
                       {isActive && <Check className="h-3 w-3 shrink-0" />}
@@ -309,8 +309,8 @@ function ExamCard({ exam, popular }: { exam: Exam; popular?: boolean }) {
     <Link
       href={`/exam/${exam.id}`}
       className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl border p-5 backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg ${popular
-          ? "border-blue-500/30 bg-gradient-to-br from-blue-900/40 to-indigo-900/30 hover:border-blue-400/60 hover:shadow-blue-500/20"
-          : "border-slate-700/60 bg-slate-800/40 hover:border-slate-600 hover:bg-slate-800/70 hover:shadow-black/20"
+        ? "border-blue-500/30 bg-gradient-to-br from-blue-900/40 to-indigo-900/30 hover:border-blue-400/60 hover:shadow-blue-500/20"
+        : "border-slate-700/60 bg-slate-800/40 hover:border-slate-600 hover:bg-slate-800/70 hover:shadow-black/20"
         }`}
     >
       <div className="space-y-1.5">
@@ -506,8 +506,8 @@ export default function ExamPage() {
               id="exam-filters-btn"
               onClick={() => setFilterOpen(true)}
               className={`relative shrink-0 inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition-all duration-150 ${totalActiveFilters > 0
-                  ? "border-blue-500 bg-blue-500/15 text-blue-300 shadow-[0_0_0_1px_rgba(59,130,246,0.4)]"
-                  : "border-slate-700 bg-slate-800/60 text-slate-300 hover:border-slate-600 hover:text-white"
+                ? "border-blue-500 bg-blue-500/15 text-blue-300 shadow-[0_0_0_1px_rgba(59,130,246,0.4)]"
+                : "border-slate-700 bg-slate-800/60 text-slate-300 hover:border-slate-600 hover:text-white"
                 }`}
             >
               <SlidersHorizontal className="h-4 w-4" />
