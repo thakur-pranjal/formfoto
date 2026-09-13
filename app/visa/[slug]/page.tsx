@@ -1,21 +1,21 @@
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
-import { getPassportConfigById, passportStandards } from '@/config/passports';
-import PhotoEditor from '@/components/PhotoEditor';
+import { getVisaConfigById, visaStandards } from '@/config/visas';
+import BiometricStudio from '@/components/BiometricStudio';
 
 interface PageProps {
     params: Promise<{ slug: string }>;
 }
 
 export async function generateStaticParams() {
-    return (passportStandards || []).map((item) => ({
+    return (visaStandards || []).map((item) => ({
         slug: item.id,
     }));
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
     const { slug } = await params;
-    const config = getPassportConfigById(slug);
+    const config = getVisaConfigById(slug);
 
     if (!config) {
         return {
@@ -30,9 +30,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     };
 }
 
-export default async function PassportSpokePage({ params }: PageProps) {
+export default async function VisaSpokePage({ params }: PageProps) {
     const { slug } = await params;
-    const config = getPassportConfigById(slug);
+    const config = getVisaConfigById(slug);
 
     if (!config) {
         return notFound();
@@ -42,10 +42,10 @@ export default async function PassportSpokePage({ params }: PageProps) {
         <main className="min-h-screen bg-slate-950 text-white py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-6xl mx-auto space-y-6">
                 <div className="border-b border-slate-800 pb-6">
-                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-400">
+                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-amber-400">
                         <span>{config.country}</span>
                         <span>•</span>
-                        <span>Passport Photo</span>
+                        <span>Visa Photo</span>
                     </div>
                     <h1 className="text-3xl font-bold tracking-tight mt-1 text-slate-100">
                         {config.title}
@@ -55,8 +55,8 @@ export default async function PassportSpokePage({ params }: PageProps) {
                     </p>
                 </div>
 
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
-                    <PhotoEditor config={config} />
+                <div className="bg-slate-900/70 border border-slate-800 backdrop-blur-md rounded-2xl p-6 shadow-xl">
+                    <BiometricStudio mode="visa" config={config} />
                 </div>
             </div>
         </main>

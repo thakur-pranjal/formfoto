@@ -233,10 +233,10 @@ export default function PhotoEditor({ mode: pageMode, config: passedConfig }: Ph
     selectedExam.category === "exam" &&
     Boolean(
       selectedExam.sigWidth &&
-        selectedExam.sigHeight &&
-        selectedExam.sigMinKB &&
-        selectedExam.sigMaxKB &&
-        selectedExam.sigAspectRatio
+      selectedExam.sigHeight &&
+      selectedExam.sigMinKB &&
+      selectedExam.sigMaxKB &&
+      selectedExam.sigAspectRatio
     );
   const isSignatureMode = mode === "signature" && signatureAvailable;
   const activeWidth = isSignatureMode ? selectedExam.sigWidth! : selectedExam.width;
@@ -257,9 +257,12 @@ export default function PhotoEditor({ mode: pageMode, config: passedConfig }: Ph
       setTargetKb(clamped);
       setDisplayTargetKb(clamped);
     } else {
-      setDisplayTargetKb((prev) => Math.min(Math.max(prev, activeMinKB), activeMaxKB));
+      const clampedDisplay = Math.min(Math.max(displayTargetKb, activeMinKB), activeMaxKB);
+      if (clampedDisplay !== displayTargetKb) {
+        setDisplayTargetKb(clampedDisplay);
+      }
     }
-  }, [activeMaxKB, activeMinKB, targetKb]);
+  }, [activeMaxKB, activeMinKB, targetKb, displayTargetKb]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
@@ -463,8 +466,8 @@ export default function PhotoEditor({ mode: pageMode, config: passedConfig }: Ph
         const fallbackText = hasName
           ? trimmedName
           : hasDate
-          ? trimmedDate
-          : formatDisplayDate(new Date());
+            ? trimmedDate
+            : formatDisplayDate(new Date());
         ctx.fillText(fallbackText, centerX, stripTop + stripHeight / 2);
       }
     }
@@ -605,11 +608,10 @@ export default function PhotoEditor({ mode: pageMode, config: passedConfig }: Ph
             type="button"
             aria-pressed={isExamCategory}
             onClick={() => setCategory("exam")}
-            className={`flex items-center gap-3 rounded-2xl border-2 px-4 py-4 text-left text-white transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-400 focus-visible:ring-offset-slate-900 ${
-              isExamCategory
+            className={`flex items-center gap-3 rounded-2xl border-2 px-4 py-4 text-left text-white transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-400 focus-visible:ring-offset-slate-900 ${isExamCategory
                 ? "border-blue-400 bg-gradient-to-r from-blue-600 to-blue-500 shadow-blue-500/30 shadow-xl"
                 : "border-slate-700 bg-slate-900/40 text-slate-200 hover:border-blue-400/60 hover:bg-slate-900/70"
-            }`}
+              }`}
           >
             <span className="text-3xl" aria-hidden>
               🎓
@@ -623,11 +625,10 @@ export default function PhotoEditor({ mode: pageMode, config: passedConfig }: Ph
             type="button"
             aria-pressed={isPassportCategory}
             onClick={() => setCategory("passport")}
-            className={`flex items-center gap-3 rounded-2xl border-2 px-4 py-4 text-left text-white transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-slate-900 ${
-              isPassportCategory
+            className={`flex items-center gap-3 rounded-2xl border-2 px-4 py-4 text-left text-white transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-slate-900 ${isPassportCategory
                 ? "border-emerald-400 bg-gradient-to-r from-emerald-600 to-emerald-500 shadow-emerald-500/30 shadow-xl"
                 : "border-slate-700 bg-slate-900/40 text-slate-200 hover:border-emerald-400/60 hover:bg-slate-900/70"
-            }`}
+              }`}
           >
             <span className="text-3xl" aria-hidden>
               ✈️
@@ -650,11 +651,10 @@ export default function PhotoEditor({ mode: pageMode, config: passedConfig }: Ph
             type="button"
             onClick={() => handleModeChange("photo")}
             aria-pressed={!isSignatureMode}
-            className={`flex-1 rounded-xl px-4 py-2 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
-              !isSignatureMode
+            className={`flex-1 rounded-xl px-4 py-2 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${!isSignatureMode
                 ? "bg-blue-600 text-white shadow-lg shadow-blue-500/30"
                 : "text-slate-300 hover:bg-slate-800/60"
-            }`}
+              }`}
           >
             Photo
           </button>
@@ -664,13 +664,11 @@ export default function PhotoEditor({ mode: pageMode, config: passedConfig }: Ph
             aria-pressed={isSignatureMode}
             disabled={!signatureAvailable}
             title={!signatureAvailable ? "Signature requirements unavailable for this exam" : undefined}
-            className={`flex-1 rounded-xl px-4 py-2 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
-              isSignatureMode
+            className={`flex-1 rounded-xl px-4 py-2 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${isSignatureMode
                 ? "bg-blue-600 text-white shadow-lg shadow-blue-500/30"
                 : "text-slate-300 hover:bg-slate-800/60"
-            } ${
-              signatureAvailable ? "" : "cursor-not-allowed opacity-40 hover:bg-transparent"
-            }`}
+              } ${signatureAvailable ? "" : "cursor-not-allowed opacity-40 hover:bg-transparent"
+              }`}
           >
             Signature
           </button>
@@ -709,19 +707,17 @@ export default function PhotoEditor({ mode: pageMode, config: passedConfig }: Ph
               </span>
             </div>
             <ChevronDown
-              className={`h-5 w-5 text-slate-400 transition-transform duration-300 ${
-                isDropdownOpen ? "rotate-180" : "rotate-0"
-              }`}
+              className={`h-5 w-5 text-slate-400 transition-transform duration-300 ${isDropdownOpen ? "rotate-180" : "rotate-0"
+                }`}
             />
           </div>
 
           {/* Dropdown Menu */}
           <div
-            className={`absolute left-0 right-0 mt-2 bg-slate-900/80 backdrop-blur-xl border border-slate-700 rounded-xl shadow-2xl overflow-hidden z-50 transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] origin-top ${
-              isDropdownOpen
+            className={`absolute left-0 right-0 mt-2 bg-slate-900/80 backdrop-blur-xl border border-slate-700 rounded-xl shadow-2xl overflow-hidden z-50 transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] origin-top ${isDropdownOpen
                 ? "opacity-100 translate-y-0 scale-100 blur-0"
                 : "opacity-0 -translate-y-4 scale-95 blur-sm pointer-events-none"
-            }`}
+              }`}
           >
             {filteredPresets.map((preset: ExamPreset) => (
               <div
@@ -730,9 +726,8 @@ export default function PhotoEditor({ mode: pageMode, config: passedConfig }: Ph
                   handleExamChange(preset.id);
                   setIsDropdownOpen(false);
                 }}
-                className={`p-4 hover:bg-slate-800 cursor-pointer border-b border-slate-800/50 last:border-0 transition-colors duration-150 ${
-                  preset.id === selectedExam.id ? "bg-slate-800/60" : ""
-                }`}
+                className={`p-4 hover:bg-slate-800 cursor-pointer border-b border-slate-800/50 last:border-0 transition-colors duration-150 ${preset.id === selectedExam.id ? "bg-slate-800/60" : ""
+                  }`}
               >
                 <p className="text-sm font-semibold text-white">{preset.name}</p>
                 <span className="text-xs text-slate-400">
@@ -756,15 +751,13 @@ export default function PhotoEditor({ mode: pageMode, config: passedConfig }: Ph
               role="switch"
               aria-checked={showDate}
               onClick={() => setShowDate((prev) => !prev)}
-              className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900 ${
-                showDate ? "bg-blue-500" : "bg-slate-600"
-              }`}
+              className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900 ${showDate ? "bg-blue-500" : "bg-slate-600"
+                }`}
             >
               <span
                 aria-hidden="true"
-                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                  showDate ? "translate-x-5" : "translate-x-0"
-                }`}
+                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${showDate ? "translate-x-5" : "translate-x-0"
+                  }`}
               />
             </button>
           </div>
@@ -807,9 +800,8 @@ export default function PhotoEditor({ mode: pageMode, config: passedConfig }: Ph
 
       <div
         {...getRootProps()}
-        className={`group flex min-h-[160px] cursor-pointer items-center justify-center rounded-2xl border-2 border-dashed border-slate-600/70 bg-slate-900/30 p-6 text-white transition hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900 ${
-          isDragActive ? "border-blue-500 bg-slate-900/50" : ""
-        }`}
+        className={`group flex min-h-[160px] cursor-pointer items-center justify-center rounded-2xl border-2 border-dashed border-slate-600/70 bg-slate-900/30 p-6 text-white transition hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900 ${isDragActive ? "border-blue-500 bg-slate-900/50" : ""
+          }`}
       >
         <input {...getInputProps()} />
         <div className="space-y-2 text-center">
@@ -859,8 +851,8 @@ export default function PhotoEditor({ mode: pageMode, config: passedConfig }: Ph
                 {removeBgStage === "optimizing"
                   ? "Optimizing..."
                   : removeBgStage === "removing"
-                  ? "Removing BG..."
-                  : "✨ Remove Background"}
+                    ? "Removing BG..."
+                    : "✨ Remove Background"}
               </button>
               <button
                 type="button"
