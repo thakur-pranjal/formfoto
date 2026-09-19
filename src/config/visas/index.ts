@@ -2,11 +2,13 @@
 import { CountryVisaConfig, VisaPassportConfig } from './types';
 
 import { indiaVisaConfig } from './india-visa';
+import { schengenVisaConfig } from './schengen-visa';
 import { usVisaConfig } from './us-visa';
 
 // Master array of all destination countries
 export const visaCountries: CountryVisaConfig[] = [
   indiaVisaConfig,
+  schengenVisaConfig,
   usVisaConfig
 ];
 
