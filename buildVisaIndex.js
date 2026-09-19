@@ -13,7 +13,7 @@ const files = fs.readdirSync(VISAS_DIR).filter(file =>
 );
 
 // 2. Dynamically generate import lines and array entries
-let importLines = `// 🚀 AUTO-GENERATED FILE — DO NOT EDIT MANUALLY\nimport { VisaPassportConfig } from './types';\n\n`;
+let importLines = `// 🚀 AUTO-GENERATED FILE — DO NOT EDIT MANUALLY\nimport { CountryVisaConfig, VisaPassportConfig } from './types';\n\n`;
 const arrayItems = [];
 
 files.forEach(file => {
@@ -28,8 +28,17 @@ files.forEach(file => {
 // 3. Construct the barrel file
 const arrayBody = arrayItems.length > 0 ? `\n${arrayItems.join(',\n')}\n` : '';
 const output = `${importLines}
-export const visaStandards: VisaPassportConfig[] = [${arrayBody}];
+// Master array of all destination countries
+export const visaCountries: CountryVisaConfig[] = [${arrayBody}];
 
+// Flattened array of every individual profile across all countries (backward-compatible)
+export const visaStandards: VisaPassportConfig[] = visaCountries.flatMap((c) => c.profiles);
+
+// Lookup a CountryVisaConfig by its id (e.g. "us-visa")
+export const getVisaCountryById = (slug: string): CountryVisaConfig | undefined =>
+  visaCountries.find((c) => c.id.toLowerCase() === slug.toLowerCase());
+
+// Lookup an individual VisaPassportConfig by its id (e.g. "us-consular-ds160")
 export const getVisaConfigById = (slug: string): VisaPassportConfig | undefined =>
   visaStandards.find((item) => item.id.toLowerCase() === slug.toLowerCase());
 
@@ -38,4 +47,4 @@ export * from './types';
 
 // 4. Write to disk
 fs.writeFileSync(INDEX_FILE, output);
-console.log(`✅ Visa index generated: registered ${files.length} visa config(s).`);
+console.log(`✅ Visa index generated: registered ${files.length} country config(s) with ${arrayItems.length > 0 ? 'profiles' : 'no profiles'}.`);

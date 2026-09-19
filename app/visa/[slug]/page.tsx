@@ -1,64 +1,47 @@
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
-import { getVisaConfigById, visaStandards } from '@/config/visas';
-import BiometricStudio from '@/components/BiometricStudio';
+import { getVisaCountryById, visaCountries } from '@/config/visas';
+import VisaStudioClient from './VisaStudioClient';
 
 interface PageProps {
     params: Promise<{ slug: string }>;
 }
 
 export async function generateStaticParams() {
-    return (visaStandards || []).map((item) => ({
-        slug: item.id,
+    return (visaCountries || []).map((c) => ({
+        slug: c.id,
     }));
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
     const { slug } = await params;
-    const config = getVisaConfigById(slug);
+    const country = getVisaCountryById(slug);
 
-    if (!config) {
+    if (!country) {
         return {
-            title: 'Document Not Found | FormFoto',
+            title: 'Destination Not Found | FormFoto',
         };
     }
 
+    // Use the default profile's SEO data for the page-level metadata
+    const defaultProfile =
+        country.profiles.find((p) => p.id === country.defaultProfileId) ??
+        country.profiles[0];
+
     return {
-        title: config.seo.metaTitle,
-        description: config.seo.metaDescription,
-        keywords: config.seo.keywords,
+        title: defaultProfile.seo.metaTitle,
+        description: defaultProfile.seo.metaDescription,
+        keywords: defaultProfile.seo.keywords,
     };
 }
 
-export default async function VisaSpokePage({ params }: PageProps) {
+export default async function VisaCountryPage({ params }: PageProps) {
     const { slug } = await params;
-    const config = getVisaConfigById(slug);
+    const country = getVisaCountryById(slug);
 
-    if (!config) {
+    if (!country) {
         return notFound();
     }
 
-    return (
-        <main className="min-h-screen bg-slate-950 text-white py-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-6xl mx-auto space-y-6">
-                <div className="border-b border-slate-800 pb-6">
-                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-amber-400">
-                        <span>{config.country}</span>
-                        <span>•</span>
-                        <span>Visa Photo</span>
-                    </div>
-                    <h1 className="text-3xl font-bold tracking-tight mt-1 text-slate-100">
-                        {config.title}
-                    </h1>
-                    <p className="text-sm text-slate-400 mt-1">
-                        Official Size: {config.physical.widthMm} × {config.physical.heightMm} mm ({config.physical.targetDpi} DPI) | Verified via {config.sourceVerification.authority}
-                    </p>
-                </div>
-
-                <div className="bg-slate-900/70 border border-slate-800 backdrop-blur-md rounded-2xl p-6 shadow-xl">
-                    <BiometricStudio mode="visa" config={config} />
-                </div>
-            </div>
-        </main>
-    );
+    return <VisaStudioClient country={country} />;
 }

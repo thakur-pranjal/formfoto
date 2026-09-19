@@ -1,8 +1,8 @@
 export interface VisaPassportConfig {
   id: string; // e.g. "us-visa", "india-passport"
   title: string;
-  country: string;
-  countryCode: string; // e.g. "US", "IN"
+  country?: string; // optional when nested inside CountryVisaConfig (which owns country/countryCode)
+  countryCode?: string; // e.g. "US", "IN" — optional when nested inside CountryVisaConfig
   type: "visa" | "passport";
   channel: "digital_upload" | "physical_print" | "both";
   applicableCategories?: string[];
@@ -63,4 +63,17 @@ export interface VisaPassportConfig {
     metaDescription: string;
     keywords: string[];
   };
+}
+
+/**
+ * Master wrapper for a destination country's visa photo specifications.
+ * A single country may have multiple distinct photo profiles
+ * (e.g., consular print vs. e-Visa digital upload).
+ */
+export interface CountryVisaConfig {
+  id: string;                     // e.g. "us-visa", "india-visa"
+  country: string;                // e.g. "United States of America"
+  countryCode: string;            // ISO 3166-1 alpha-2 uppercase, e.g. "US"
+  defaultProfileId: string;       // must match one of profiles[].id
+  profiles: VisaPassportConfig[]; // 1 or more distinct photo specifications
 }
