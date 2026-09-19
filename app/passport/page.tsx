@@ -28,7 +28,7 @@ function PassportCard({ config }: { config: (typeof passportStandards)[number] }
       <div className="space-y-1.5">
         <div className="flex items-center gap-2">
           <span className="text-xl" aria-hidden>
-            {countryFlag(config.countryCode)}
+            {config.countryCode ? countryFlag(config.countryCode) : null}
           </span>
           <h3 className="truncate text-sm font-semibold leading-snug text-white transition-colors group-hover:text-emerald-300">
             {config.title}
