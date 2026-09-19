@@ -43,7 +43,7 @@ export default async function PassportSpokePage({ params }: PageProps) {
             <div className="max-w-6xl mx-auto space-y-6">
                 <div className="border-b border-slate-800 pb-6">
                     <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-400">
-                        <span>{config.country}</span>
+                        <span>{config.country ?? config.title}</span>
                         <span>•</span>
                         <span>Passport Photo</span>
                     </div>

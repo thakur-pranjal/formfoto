@@ -86,8 +86,8 @@ export default function PassportHubPage() {
     return passportStandards.filter(
       (p) =>
         p.title.toLowerCase().includes(q) ||
-        p.country.toLowerCase().includes(q) ||
-        p.countryCode.toLowerCase().includes(q) ||
+        p.country?.toLowerCase().includes(q) ||
+        p.countryCode?.toLowerCase().includes(q) ||
         p.id.toLowerCase().includes(q) ||
         p.applicableCategories?.some((c) => c.toLowerCase().includes(q)),
     );

@@ -35,6 +35,11 @@ export interface VisaPassportConfig {
     maxKb?: number;
     inkColor?: string;
   };
+  passportScan?: {
+    required: boolean;
+    maxKb?: number;
+    allowedFormats?: string[];
+  };
   background: {
     requiredHex: string;
     label: string;
