@@ -1,85 +1,75 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import Link from "next/link";
-import { Search, ChevronRight, X, BookOpen } from "lucide-react";
+import { Search } from "lucide-react";
 import { passportStandards } from "@/config/passports";
+import DirectoryHeader from "@/components/directory/DirectoryHeader";
+import CountryStandardCard from "@/components/directory/CountryStandardCard";
 
-// ── Helper: Unicode country flag ──────────────────────────────────────────────
+// ---------------------------------------------------------------------------
+// Empty state
+// ---------------------------------------------------------------------------
 
-function countryFlag(code: string): string {
-  if (!code || code.length !== 2) return "🌐";
-  const offset = 0x1f1e6 - 65;
-  return String.fromCodePoint(
-    code.toUpperCase().charCodeAt(0) + offset,
-    code.toUpperCase().charCodeAt(1) + offset,
-  );
-}
-
-// ── Sub-component: Passport Card ─────────────────────────────────────────────
-
-function PassportCard({ config }: { config: (typeof passportStandards)[number] }) {
-  const dimLabel = `${config.physical.widthMm} × ${config.physical.heightMm} mm`;
+function EmptyState({
+  query,
+  onReset,
+}: {
+  query: string;
+  onReset?: () => void;
+}) {
   return (
-    <Link
-      href={`/passport/${config.id}`}
-      className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-700/60 bg-slate-800/40 p-5 backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-500/50 hover:bg-slate-800/70 hover:shadow-lg hover:shadow-emerald-900/20"
+    <div
+      className={[
+        "rounded-ff-lg border border-ff-border bg-ff-surface-subtle",
+        "py-16 text-center",
+      ].join(" ")}
     >
-      <div className="space-y-1.5">
-        <div className="flex items-center gap-2">
-          <span className="text-xl" aria-hidden>
-            {config.countryCode ? countryFlag(config.countryCode) : null}
-          </span>
-          <h3 className="truncate text-sm font-semibold leading-snug text-white transition-colors group-hover:text-emerald-300">
-            {config.title}
-          </h3>
-        </div>
-        <p className="text-xs text-slate-500">{config.country}</p>
-      </div>
-
-      <div className="mt-4 flex items-center justify-between gap-2">
-        <div className="flex flex-wrap gap-1">
-          <span className="rounded-full border border-slate-700/60 bg-slate-800/60 px-2 py-0.5 text-[10px] text-slate-400">
-            {dimLabel}
-          </span>
-          <span className="rounded-full border border-emerald-700/40 bg-emerald-900/20 px-2 py-0.5 text-[10px] font-medium text-emerald-400 capitalize">
-            {config.channel.replace("_", " ")}
-          </span>
-          {config.applicableCategories?.slice(0, 1).map((cat) => (
-            <span
-              key={cat}
-              className="rounded-full border border-slate-700/50 bg-slate-800/50 px-2 py-0.5 text-[10px] text-slate-500"
-            >
-              {cat}
-            </span>
-          ))}
-        </div>
-        <ChevronRight className="h-4 w-4 shrink-0 text-slate-600 transition-all group-hover:translate-x-0.5 group-hover:text-emerald-400" />
-      </div>
-    </Link>
-  );
-}
-
-// ── Empty State ───────────────────────────────────────────────────────────────
-
-function EmptyState({ query }: { query: string }) {
-  return (
-    <div className="rounded-2xl border border-slate-700/50 bg-slate-800/30 py-16 text-center text-slate-400">
-      <Search className="mx-auto mb-3 h-8 w-8 opacity-40" />
-      <p className="text-sm font-medium text-slate-300">No passport configs found</p>
+      <Search
+        aria-hidden="true"
+        className="mx-auto mb-3 h-8 w-8 text-ff-foreground-muted opacity-50"
+      />
+      <p
+        className="font-medium text-ff-foreground"
+        style={{ fontSize: "var(--ff-text-body-size)" }}
+      >
+        No passport standards found
+      </p>
       {query && (
-        <p className="mt-1 text-xs text-slate-500">No results for &ldquo;{query}&rdquo;</p>
+        <p
+          className="mt-1 text-ff-foreground-secondary"
+          style={{ fontSize: "var(--ff-text-small-size)" }}
+        >
+          No results for &ldquo;{query}&rdquo;
+        </p>
       )}
-      <p className="mt-2 text-xs text-slate-600">Try a different search term.</p>
+      <p
+        className="mt-2 text-ff-foreground-muted"
+        style={{ fontSize: "var(--ff-text-small-size)" }}
+      >
+        Try a different search term.
+      </p>
+      {onReset && query && (
+        <button
+          type="button"
+          onClick={onReset}
+          className="mt-4 inline-flex items-center rounded-ff-md border border-ff-border bg-ff-surface px-4 py-2 text-xs font-semibold text-brand-600 shadow-ff-sm hover:border-brand-300 hover:bg-ff-surface-subtle transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[var(--ff-focus-color)]"
+        >
+          Reset search
+        </button>
+      )}
     </div>
   );
 }
 
-// ── Main Page ─────────────────────────────────────────────────────────────────
+// ---------------------------------------------------------------------------
+// Page
+// ---------------------------------------------------------------------------
 
 export default function PassportHubPage() {
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Preserve existing search semantics exactly:
+  // matches title, country name, country code, id, and applicableCategories.
   const filteredPassports = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     if (!q) return passportStandards;
@@ -94,92 +84,69 @@ export default function PassportHubPage() {
   }, [searchQuery]);
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 px-4 py-16 text-white sm:px-6 sm:py-24">
-      <div className="mx-auto max-w-6xl space-y-10">
-
-        {/* ── Hero ── */}
-        <header className="space-y-6 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-emerald-300">
-            <BookOpen className="h-3.5 w-3.5" aria-hidden /> Passport Edition
-          </div>
-
-          <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
-            <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">
-              Passport Photo
-            </span>
-            <br />
-            <span className="text-white">Standards</span>
-          </h1>
-
-          <p className="mx-auto max-w-2xl text-base leading-relaxed text-slate-400 sm:text-lg">
-            Pick your country. Instantly resize and compress your passport photo
-            to the exact official specification — 100% in your browser.
-          </p>
-
-          {/* Search */}
-          <div className="mx-auto mt-6 w-full max-w-2xl">
-            <div className="relative flex items-center">
-              <Search className="pointer-events-none absolute left-4 h-5 w-5 text-slate-400" />
-              <input
-                id="passport-search"
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by country or passport type…"
-                className="w-full rounded-2xl border border-slate-700 bg-slate-800/70 py-4 pl-12 pr-12 text-base text-white placeholder-slate-500 shadow-xl backdrop-blur-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  aria-label="Clear search"
-                  className="absolute right-4 rounded-full p-0.5 text-slate-400 hover:text-white transition-colors"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-          </div>
-        </header>
-
-        {/* ── Result count strip ── */}
-        {searchQuery.trim() && (
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-slate-400">
-              <span className="font-semibold text-white">{filteredPassports.length}</span>{" "}
-              result{filteredPassports.length !== 1 ? "s" : ""} found
-            </span>
-            <button
-              onClick={() => setSearchQuery("")}
-              className="text-xs text-emerald-400 hover:text-emerald-300 transition-colors"
-            >
-              Reset
-            </button>
-          </div>
-        )}
+    <main className="min-h-screen bg-ff-background px-ff-page-gutter py-ff-12 sm:py-ff-16">
+      <div
+        className="mx-auto space-y-10"
+        style={{ maxWidth: "var(--spacing-ff-content-max)" }}
+      >
+        {/* ── Directory header (title + search + result strip) ── */}
+        <DirectoryHeader
+          title="Passport Photo Standards"
+          description="Select your country to instantly resize and compress your passport photo to the exact official specification — 100% in your browser."
+          eyebrow="Passports"
+          searchId="passport-search"
+          searchLabel="Search passport standards by country or type"
+          searchPlaceholder="Search by country or passport type…"
+          searchValue={searchQuery}
+          onSearchChange={setSearchQuery}
+          resultCount={filteredPassports.length}
+          resultNoun="standard"
+        />
 
         {/* ── Empty state ── */}
-        {filteredPassports.length === 0 && <EmptyState query={searchQuery} />}
+        {filteredPassports.length === 0 && (
+          <EmptyState query={searchQuery} onReset={() => setSearchQuery("")} />
+        )}
 
         {/* ── Grid ── */}
         {filteredPassports.length > 0 && (
-          <section aria-label="Passport Standards" className="space-y-5">
-            <div className="flex items-center gap-3">
-              <h2 className="text-lg font-bold tracking-wide text-slate-200">
-                🛂 All Passport Standards
+          <section aria-label="Passport Standards">
+            {/* Section label row */}
+            <div className="mb-5 flex items-center gap-3">
+              <h2
+                className="font-semibold text-ff-foreground"
+                style={{ fontSize: "var(--ff-text-h4-size)" }}
+              >
+                All Passport Standards
               </h2>
-              <span className="inline-flex items-center rounded-full border border-slate-600/60 bg-slate-700/50 px-2.5 py-0.5 text-xs font-semibold text-slate-300">
+              {/* Count badge */}
+              <span
+                className={[
+                  "inline-flex items-center rounded-ff-pill",
+                  "border border-ff-border bg-ff-surface-subtle",
+                  "px-2.5 py-0.5 font-semibold text-ff-foreground-secondary",
+                ].join(" ")}
+                style={{ fontSize: "var(--ff-text-caption-size)" }}
+              >
                 {filteredPassports.length}
               </span>
             </div>
-            <div className="h-px bg-gradient-to-r from-emerald-500/40 via-slate-700/50 to-transparent" />
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+
+            {/* Divider */}
+            <div className="mb-5 h-px bg-ff-border" />
+
+            {/* Card grid — 1 col mobile, 2 col sm, 3 col lg */}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {filteredPassports.map((config) => (
-                <PassportCard key={config.id} config={config} />
+                <CountryStandardCard
+                  key={config.id}
+                  config={config}
+                  href={`/passport/${config.id}`}
+                />
               ))}
             </div>
           </section>
         )}
-
       </div>
     </main>
   );

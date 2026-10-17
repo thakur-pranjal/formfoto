@@ -1,11 +1,14 @@
 "use client";
 
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
-import Link from "next/link";
-import { Search, ChevronRight, SlidersHorizontal, X, Check } from "lucide-react";
+import { Search, SlidersHorizontal, X, Check } from "lucide-react";
 import { examStandards as FORMATS } from "@/config/exams";
+import DirectoryHeader from "@/components/directory/DirectoryHeader";
+import ExamStandardCard from "@/components/directory/ExamStandardCard";
 
-// ── Filter Definitions ─────────────────────────────────────────────────────────
+// ---------------------------------------------------------------------------
+// Filter Definitions & Enrichment
+// ---------------------------------------------------------------------------
 
 const FILTER_GROUPS = {
   Location: [
@@ -30,6 +33,7 @@ const FILTER_GROUPS = {
   Domain: [
     "Engineering",
     "Medical",
+    "University Entrance",
     "Civil Services",
     "Banking",
     "Railway",
@@ -48,12 +52,18 @@ const FILTER_GROUPS = {
 
 type FilterGroup = keyof typeof FILTER_GROUPS;
 
-// ── Data Enrichment ────────────────────────────────────────────────────────────
-
-/** IDs that will eventually carry isPopular: true in the config schema */
+/** IDs that will carry isPopular: true */
 const POPULAR_IDS = new Set([
-  "upsc_cse", "neet_ug", "jee_main", "ssc_cgl", "ibps_po",
-  "jee_advanced", "neet_pg", "cat", "cuet_ug", "rrb_ntpc",
+  "upsc_cse",
+  "neet_ug",
+  "jee_main",
+  "ssc_cgl",
+  "ibps_po",
+  "jee_advanced",
+  "neet_pg",
+  "cat",
+  "cuet_ug",
+  "rrb_ntpc",
 ]);
 
 /** State-level exam IDs → display location */
@@ -90,13 +100,40 @@ const STATE_MAP: Record<string, string> = {
   delhi_police_constable: "Delhi",
 };
 
-/** subCategory → broad Domain bucket */
-function deriveDomain(sub: string): string {
+/** subCategory + id → broad Domain bucket */
+function deriveDomain(sub: string, id: string = ""): string {
   const s = sub.toLowerCase();
-  if (s.includes("engineering") || s.includes("agriculture") || s.includes("pharmacy"))
-    return "Engineering";
-  if (s.includes("medical") || s.includes("postgraduate entrance") || s.includes("undergraduate entrance"))
+  const i = id.toLowerCase();
+  if (
+    s.includes("medical") ||
+    s.includes("mbbs") ||
+    s.includes("neet") ||
+    s.includes("ini cet") ||
+    s.includes("ini_cet") ||
+    s.includes("afmc") ||
+    s.includes("aiims") ||
+    s.includes("dental") ||
+    s.includes("nursing") ||
+    i.includes("neet") ||
+    i.includes("ini_cet") ||
+    i.includes("afmc") ||
+    i.includes("aiims")
+  )
     return "Medical";
+  if (
+    s.includes("engineering") ||
+    s.includes("agriculture") ||
+    s.includes("pharmacy")
+  )
+    return "Engineering";
+  if (
+    s.includes("university entrance") ||
+    s.includes("undergraduate entrance") ||
+    s.includes("postgraduate entrance") ||
+    s.includes("cuet") ||
+    i.includes("cuet")
+  )
+    return "University Entrance";
   if (s.includes("civil service")) return "Civil Services";
   if (s.includes("banking")) return "Banking";
   if (s.includes("railway")) return "Railway";
@@ -111,7 +148,8 @@ function deriveDomain(sub: string): string {
     s.includes("government job") ||
     s.includes("state psc") ||
     s.includes("state public service")
-  ) return "Government Jobs";
+  )
+    return "Government Jobs";
   if (s.includes("research") || s.includes("fellowship")) return "Research";
   return "Government Jobs";
 }
@@ -135,26 +173,28 @@ function deriveLevel(sub: string, id: string): string {
   return "Other";
 }
 
-// ── Base Data ──────────────────────────────────────────────────────────────────
+// ---------------------------------------------------------------------------
+// Base Data
+// ---------------------------------------------------------------------------
 
 type BaseExam = ReturnType<typeof FORMATS.filter>[number];
 
 type Exam = BaseExam & {
-  /** Forward-compatible with future schema field */
   tags: string[];
-  /** Forward-compatible with future schema field */
   isPopular: boolean;
   location: string;
   domain: string;
   level: string;
 };
 
-const ALL_EXAMS: Exam[] = (FORMATS.filter((f) => f.category === "exam") as BaseExam[])
+const ALL_EXAMS: Exam[] = (
+  FORMATS.filter((f) => f.category === "exam") as BaseExam[]
+)
   .sort((a, b) => a.title.localeCompare(b.title))
   .map((f) => {
     const sub = ((f as any).subCategory ?? "General / Other").trim() as string;
     const location = STATE_MAP[f.id] ?? "National";
-    const domain = deriveDomain(sub);
+    const domain = deriveDomain(sub, f.id);
     const level = deriveLevel(sub, f.id);
     return {
       ...f,
@@ -166,7 +206,9 @@ const ALL_EXAMS: Exam[] = (FORMATS.filter((f) => f.category === "exam") as BaseE
     };
   });
 
-// ── Sub-component: Filter Chip ────────────────────────────────────────────────
+// ---------------------------------------------------------------------------
+// Sub-components: Filter Chip, Filter Modal, Empty State
+// ---------------------------------------------------------------------------
 
 function FilterChip({
   label,
@@ -176,20 +218,19 @@ function FilterChip({
   onRemove: () => void;
 }) {
   return (
-    <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-blue-500/40 bg-blue-500/10 px-3 py-1 text-xs font-semibold text-blue-300">
-      {label}
+    <span className="inline-flex shrink-0 items-center gap-1.5 rounded-ff-pill border border-brand-200 bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-700">
+      <span>{label}</span>
       <button
+        type="button"
         onClick={onRemove}
         aria-label={`Remove ${label} filter`}
-        className="ml-0.5 rounded-full p-0.5 hover:bg-blue-500/20 transition-colors"
+        className="rounded-full p-0.5 text-brand-500 hover:bg-brand-200/60 hover:text-brand-900 transition-colors outline-none focus-visible:ring-1 focus-visible:ring-[var(--ff-focus-color)]"
       >
-        <X className="h-3 w-3" />
+        <X className="h-3 w-3" aria-hidden="true" />
       </button>
     </span>
   );
 }
-
-// ── Sub-component: Filter Modal ───────────────────────────────────────────────
 
 function FilterModal({
   activeFilters,
@@ -202,67 +243,89 @@ function FilterModal({
   onClear: () => void;
   onClose: () => void;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
 
+  // Focus trap / initial focus
   useEffect(() => {
-    function handler(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+    closeButtonRef.current?.focus();
+  }, []);
+
+  // Click outside to close
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        dialogRef.current &&
+        !dialogRef.current.contains(e.target as Node)
+      ) {
+        onClose();
+      }
     }
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [onClose]);
 
+  // Escape key to close
   useEffect(() => {
-    function handler(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        onClose();
+      }
     }
-    document.addEventListener("keydown", handler);
-    return () => document.removeEventListener("keydown", handler);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
 
   const totalActive = Object.values(activeFilters).flat().length;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-xs p-0 sm:p-4">
       <div
-        ref={ref}
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label="Filter exams"
-        className="w-full max-w-sm sm:max-w-md mx-auto bg-slate-900 border border-slate-700/80 rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85dvh]"
+        className="flex max-h-[85dvh] w-full max-w-sm sm:max-w-lg flex-col overflow-hidden rounded-t-2xl sm:rounded-ff-xl border border-ff-border bg-ff-surface shadow-ff-lg"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-slate-700/60 shrink-0">
+        <div className="flex shrink-0 items-center justify-between border-b border-ff-border px-5 py-4">
           <div>
-            <h2 className="text-base font-bold text-white">Filters</h2>
+            <h2 className="text-base font-semibold text-ff-foreground">
+              Filters
+            </h2>
             {totalActive > 0 && (
-              <p className="text-xs text-slate-400 mt-0.5">{totalActive} active</p>
+              <p className="mt-0.5 text-xs text-ff-foreground-muted">
+                {totalActive} active
+              </p>
             )}
           </div>
           <div className="flex items-center gap-2">
             {totalActive > 0 && (
               <button
+                type="button"
                 onClick={onClear}
-                className="text-xs font-semibold text-blue-400 hover:text-blue-300 transition-colors px-2 py-1 rounded-lg hover:bg-blue-500/10"
+                className="rounded-ff-sm px-2 py-1 text-xs font-medium text-brand-600 hover:bg-brand-50 hover:text-brand-700 transition-colors"
               >
                 Clear all
               </button>
             )}
             <button
+              ref={closeButtonRef}
+              type="button"
               onClick={onClose}
               aria-label="Close filters"
-              className="rounded-full p-1.5 text-slate-400 hover:text-white hover:bg-slate-700/60 transition-colors"
+              className="rounded-full p-1.5 text-ff-foreground-muted hover:bg-ff-surface-subtle hover:text-ff-foreground transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[var(--ff-focus-color)]"
             >
-              <X className="h-4 w-4" />
+              <X className="h-4 w-4" aria-hidden="true" />
             </button>
           </div>
         </div>
 
-        {/* Scrollable body */}
-        <div className="overflow-y-auto overscroll-contain flex-1 px-5 py-4 space-y-6">
+        {/* Scrollable filter sections */}
+        <div className="flex-1 overflow-y-auto overscroll-contain px-5 py-4 space-y-6">
           {(Object.keys(FILTER_GROUPS) as FilterGroup[]).map((group) => (
             <div key={group}>
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-ff-foreground-muted">
                 {group}
               </h3>
               <div className="flex flex-wrap gap-2">
@@ -271,15 +334,24 @@ function FilterModal({
                   return (
                     <button
                       key={option}
+                      type="button"
                       onClick={() => onToggle(group, option)}
                       aria-pressed={isActive}
-                      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all duration-150 ${isActive
-                        ? "border-blue-500 bg-blue-500/20 text-blue-300 shadow-[0_0_0_1px_rgba(59,130,246,0.4)]"
-                        : "border-slate-700 bg-slate-800/60 text-slate-400 hover:border-slate-500 hover:text-slate-200"
-                        }`}
+                      className={[
+                        "inline-flex items-center gap-1.5 rounded-ff-pill border px-3 py-1.5 text-xs font-medium transition-all duration-150",
+                        "outline-none focus-visible:ring-2 focus-visible:ring-[var(--ff-focus-color)]",
+                        isActive
+                          ? "border-brand-500 bg-brand-50 text-brand-700 ring-1 ring-brand-500/30"
+                          : "border-ff-border bg-ff-surface text-ff-foreground-secondary hover:border-ff-border-strong hover:bg-ff-surface-subtle hover:text-ff-foreground",
+                      ].join(" ")}
                     >
-                      {isActive && <Check className="h-3 w-3 shrink-0" />}
-                      {option}
+                      {isActive && (
+                        <Check
+                          className="h-3 w-3 shrink-0 text-brand-600"
+                          aria-hidden="true"
+                        />
+                      )}
+                      <span>{option}</span>
                     </button>
                   );
                 })}
@@ -289,10 +361,11 @@ function FilterModal({
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-4 border-t border-slate-700/60 shrink-0">
+        <div className="shrink-0 border-t border-ff-border bg-ff-surface-subtle px-5 py-4">
           <button
+            type="button"
             onClick={onClose}
-            className="w-full rounded-2xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 py-3 text-sm font-bold text-white transition-colors shadow-lg shadow-blue-900/40"
+            className="w-full rounded-ff-lg bg-brand-500 py-2.5 text-sm font-semibold text-white shadow-ff-sm transition-colors hover:bg-brand-600 active:bg-brand-700 outline-none focus-visible:ring-2 focus-visible:ring-[var(--ff-focus-color)] focus-visible:ring-offset-2"
           >
             Show Results
           </button>
@@ -302,68 +375,60 @@ function FilterModal({
   );
 }
 
-// ── Sub-component: Exam Card ──────────────────────────────────────────────────
-
-function ExamCard({ exam, popular }: { exam: Exam; popular?: boolean }) {
+function EmptyState({
+  query,
+  onReset,
+}: {
+  query: string;
+  onReset?: () => void;
+}) {
   return (
-    <Link
-      href={`/exam/${exam.id}`}
-      className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl border p-5 backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg ${popular
-        ? "border-blue-500/30 bg-gradient-to-br from-blue-900/40 to-indigo-900/30 hover:border-blue-400/60 hover:shadow-blue-500/20"
-        : "border-slate-700/60 bg-slate-800/40 hover:border-slate-600 hover:bg-slate-800/70 hover:shadow-black/20"
-        }`}
+    <div
+      className={[
+        "rounded-ff-lg border border-ff-border bg-ff-surface-subtle",
+        "py-16 text-center",
+      ].join(" ")}
     >
-      <div className="space-y-1.5">
-        {popular && (
-          <span className="inline-block rounded-full bg-blue-500/20 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-blue-300">
-            Popular
-          </span>
-        )}
-        <h3 className="truncate text-sm font-semibold leading-snug text-white transition-colors group-hover:text-blue-300">
-          {exam.title}
-        </h3>
-        <p className="truncate text-xs text-slate-500">
-          {exam.documents.map((d) => d.name).join(" \u2022 ")}
-        </p>
-      </div>
-      <div className="mt-4 flex items-center justify-between gap-2">
-        <div className="flex min-w-0 flex-wrap gap-1">
-          <span className="rounded-full border border-slate-700/60 bg-slate-800/60 px-2 py-0.5 text-[10px] text-slate-500">
-            {exam.domain}
-          </span>
-          {exam.location !== "National" && (
-            <span className="rounded-full border border-slate-700/60 bg-slate-800/60 px-2 py-0.5 text-[10px] text-slate-500">
-              {exam.location}
-            </span>
-          )}
-        </div>
-        <ChevronRight
-          className={`h-4 w-4 shrink-0 transition-all group-hover:translate-x-0.5 ${popular ? "text-blue-400" : "text-slate-600 group-hover:text-blue-400"
-            }`}
-        />
-      </div>
-    </Link>
-  );
-}
-
-// ── Empty State ───────────────────────────────────────────────────────────────
-
-function EmptyState({ query }: { query: string }) {
-  return (
-    <div className="rounded-2xl border border-slate-700/50 bg-slate-800/30 py-16 text-center text-slate-400">
-      <Search className="mx-auto mb-3 h-8 w-8 opacity-40" />
-      <p className="text-sm font-medium text-slate-300">No exams found</p>
+      <Search
+        aria-hidden="true"
+        className="mx-auto mb-3 h-8 w-8 text-ff-foreground-muted opacity-50"
+      />
+      <p
+        className="font-medium text-ff-foreground"
+        style={{ fontSize: "var(--ff-text-body-size)" }}
+      >
+        No exams found
+      </p>
       {query && (
-        <p className="mt-1 text-xs text-slate-500">
+        <p
+          className="mt-1 text-ff-foreground-secondary"
+          style={{ fontSize: "var(--ff-text-small-size)" }}
+        >
           No results for &ldquo;{query}&rdquo;
         </p>
       )}
-      <p className="mt-2 text-xs text-slate-600">Try adjusting your filters or search term.</p>
+      <p
+        className="mt-2 text-ff-foreground-muted"
+        style={{ fontSize: "var(--ff-text-small-size)" }}
+      >
+        Try adjusting your filters or search term.
+      </p>
+      {onReset && (
+        <button
+          type="button"
+          onClick={onReset}
+          className="mt-4 inline-flex items-center rounded-ff-md border border-ff-border bg-ff-surface px-4 py-2 text-xs font-semibold text-brand-600 shadow-ff-sm hover:border-brand-300 hover:bg-ff-surface-subtle transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[var(--ff-focus-color)]"
+        >
+          Reset filters & search
+        </button>
+      )}
     </div>
   );
 }
 
-// ── Main Page ─────────────────────────────────────────────────────────────────
+// ---------------------------------------------------------------------------
+// Main Page
+// ---------------------------------------------------------------------------
 
 const INITIAL_FILTERS: Record<FilterGroup, string[]> = {
   Location: [],
@@ -373,7 +438,8 @@ const INITIAL_FILTERS: Record<FilterGroup, string[]> = {
 
 export default function ExamPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeFilters, setActiveFilters] = useState<Record<FilterGroup, string[]>>(INITIAL_FILTERS);
+  const [activeFilters, setActiveFilters] =
+    useState<Record<FilterGroup, string[]>>(INITIAL_FILTERS);
   const [filterOpen, setFilterOpen] = useState(false);
 
   // ── Derived ──────────────────────────────────────────────────────────────────
@@ -393,7 +459,8 @@ export default function ExamPage() {
           e.title.toLowerCase().includes(q) ||
           e.id.toLowerCase().includes(q) ||
           e.domain.toLowerCase().includes(q) ||
-          e.location.toLowerCase().includes(q),
+          e.location.toLowerCase().includes(q) ||
+          ((e as any).subCategory?.toLowerCase().includes(q) ?? false),
       );
     }
 
@@ -411,9 +478,14 @@ export default function ExamPage() {
     return result;
   }, [searchQuery, activeFilters]);
 
-  const popularExams = useMemo(() => filteredExams.filter((e) => e.isPopular), [filteredExams]);
-  const allExams = useMemo(() => filteredExams.filter((e) => !e.isPopular), [filteredExams]);
-  const isFiltering = searchQuery.trim().length > 0 || totalActiveFilters > 0;
+  const popularExams = useMemo(
+    () => filteredExams.filter((e) => e.isPopular),
+    [filteredExams],
+  );
+  const allExams = useMemo(
+    () => filteredExams.filter((e) => !e.isPopular),
+    [filteredExams],
+  );
 
   // ── Handlers ─────────────────────────────────────────────────────────────────
 
@@ -439,6 +511,13 @@ export default function ExamPage() {
     setSearchQuery("");
   }, []);
 
+  const handleModalClose = useCallback(() => {
+    setFilterOpen(false);
+    // Return focus to filter trigger button
+    const btn = document.getElementById("exam-filters-btn");
+    if (btn) btn.focus();
+  }, []);
+
   // ── Render ────────────────────────────────────────────────────────────────────
 
   return (
@@ -448,78 +527,55 @@ export default function ExamPage() {
           activeFilters={activeFilters}
           onToggle={toggleFilter}
           onClear={() => setActiveFilters(INITIAL_FILTERS)}
-          onClose={() => setFilterOpen(false)}
+          onClose={handleModalClose}
         />
       )}
 
-      <main className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 px-4 py-16 text-white sm:px-6 sm:py-24">
-        <div className="mx-auto max-w-6xl space-y-10">
+      <main className="min-h-screen bg-ff-background px-ff-page-gutter py-ff-12 sm:py-ff-16">
+        <div
+          className="mx-auto space-y-8"
+          style={{ maxWidth: "var(--spacing-ff-content-max)" }}
+        >
+          {/* ── Directory header (title + search + result strip) ── */}
+          <DirectoryHeader
+            title="Government Exam Photo Tools"
+            description="Pick your exam. Instantly resize, crop, and compress your photo or signature to exact official specifications — 100% in your browser."
+            eyebrow="Exams"
+            searchId="exam-search"
+            searchLabel="Search exams by name, authority, domain, or state"
+            searchPlaceholder="Search exams — UPSC, NEET, SSC, Banking…"
+            searchValue={searchQuery}
+            onSearchChange={setSearchQuery}
+            resultCount={filteredExams.length}
+            resultNoun="exam"
+          />
 
-          {/* ── Hero ── */}
-          <header className="space-y-6 text-center">
-            <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-500/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-blue-300">
-              <span aria-hidden>🎓</span> Exam Edition
-            </div>
-
-            <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
-              <span className="bg-gradient-to-r from-blue-400 via-cyan-300 to-indigo-400 bg-clip-text text-transparent">
-                Government Exam
-              </span>
-              <br />
-              <span className="text-white">Photo Tools</span>
-            </h1>
-
-            <p className="mx-auto max-w-2xl text-base leading-relaxed text-slate-400 sm:text-lg">
-              Pick your exam. Instantly resize, crop, and compress your photo or
-              signature to exact official specifications — 100% in your browser.
-            </p>
-
-            {/* Full-width Search */}
-            <div className="mx-auto mt-6 w-full max-w-2xl">
-              <div className="relative flex items-center">
-                <Search className="pointer-events-none absolute left-4 h-5 w-5 text-slate-400" />
-                <input
-                  id="exam-search"
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search exams — UPSC, NEET, SSC, Banking…"
-                  className="w-full rounded-2xl border border-slate-700 bg-slate-800/70 py-4 pl-12 pr-12 text-base text-white placeholder-slate-500 shadow-xl backdrop-blur-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    aria-label="Clear search"
-                    className="absolute right-4 rounded-full p-0.5 text-slate-400 hover:text-white transition-colors"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-            </div>
-          </header>
-
-          {/* ── Filters Row ── */}
-          <div className="flex min-w-0 items-start gap-3">
-            {/* Filters button */}
+          {/* ── Filters Bar (Button + Active Chips) ── */}
+          <div className="flex min-w-0 items-center gap-3">
             <button
               id="exam-filters-btn"
+              type="button"
               onClick={() => setFilterOpen(true)}
-              className={`relative shrink-0 inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition-all duration-150 ${totalActiveFilters > 0
-                ? "border-blue-500 bg-blue-500/15 text-blue-300 shadow-[0_0_0_1px_rgba(59,130,246,0.4)]"
-                : "border-slate-700 bg-slate-800/60 text-slate-300 hover:border-slate-600 hover:text-white"
-                }`}
+              aria-haspopup="dialog"
+              aria-expanded={filterOpen}
+              className={[
+                "relative inline-flex shrink-0 items-center gap-2 rounded-ff-lg border px-3.5 py-2 text-sm font-medium shadow-ff-sm transition-colors",
+                "outline-none focus-visible:ring-2 focus-visible:ring-[var(--ff-focus-color)] focus-visible:ring-offset-1",
+                totalActiveFilters > 0
+                  ? "border-brand-300 bg-brand-50 text-brand-700 hover:border-brand-400 hover:bg-brand-100"
+                  : "border-ff-border bg-ff-surface text-ff-foreground hover:border-ff-border-strong hover:bg-ff-surface-subtle",
+              ].join(" ")}
             >
-              <SlidersHorizontal className="h-4 w-4" />
-              Filters
+              <SlidersHorizontal className="h-4 w-4 shrink-0 text-current" />
+              <span>Filters</span>
               {totalActiveFilters > 0 && (
-                <span className="ml-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-blue-500 text-[10px] font-bold text-white">
+                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-500 px-1.5 text-xs font-semibold text-white">
                   {totalActiveFilters}
                 </span>
               )}
             </button>
 
-            {/* Horizontally scrollable active filter chips */}
+            {/* Active filter chips */}
             {totalActiveFilters > 0 && (
               <div className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                 {(Object.keys(activeFilters) as FilterGroup[]).flatMap((group) =>
@@ -532,8 +588,9 @@ export default function ExamPage() {
                   )),
                 )}
                 <button
+                  type="button"
                   onClick={() => setActiveFilters(INITIAL_FILTERS)}
-                  className="shrink-0 text-xs text-slate-500 hover:text-slate-300 transition-colors whitespace-nowrap"
+                  className="shrink-0 text-xs font-medium text-brand-600 hover:text-brand-700 hover:underline transition-colors whitespace-nowrap outline-none focus-visible:ring-1 focus-visible:ring-[var(--ff-focus-color)] rounded-ff-sm px-1 py-0.5"
                 >
                   Clear all
                 </button>
@@ -541,65 +598,101 @@ export default function ExamPage() {
             )}
           </div>
 
-          {/* ── Result count strip ── */}
-          {isFiltering && (
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-slate-400">
-                <span className="font-semibold text-white">{filteredExams.length}</span>{" "}
+          {/* ── Filter-only result count strip (when filters active but search query empty) ── */}
+          {totalActiveFilters > 0 && searchQuery.trim().length === 0 && (
+            <div className="flex max-w-xl items-center justify-between">
+              <p
+                className="text-ff-foreground-secondary"
+                style={{ fontSize: "var(--ff-text-small-size)" }}
+              >
+                <span className="font-semibold text-ff-foreground">
+                  {filteredExams.length}
+                </span>{" "}
                 exam{filteredExams.length !== 1 ? "s" : ""} found
-              </span>
+              </p>
               <button
+                type="button"
                 onClick={clearAllFilters}
-                className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                className={[
+                  "text-brand-500 hover:text-brand-600",
+                  "outline-none focus-visible:ring-2 focus-visible:ring-[var(--ff-focus-color)] focus-visible:ring-offset-1 rounded-ff-sm",
+                  "transition-colors duration-[var(--ff-duration-fast)]",
+                ].join(" ")}
+                style={{ fontSize: "var(--ff-text-small-size)" }}
               >
                 Reset
               </button>
             </div>
           )}
 
-          {/* ── No results ── */}
-          {filteredExams.length === 0 && <EmptyState query={searchQuery} />}
+          {/* ── Empty state ── */}
+          {filteredExams.length === 0 && (
+            <EmptyState query={searchQuery} onReset={clearAllFilters} />
+          )}
 
-          {/* ── 🔥 Popular Exams ── */}
+          {/* ── Popular Exams ── */}
           {popularExams.length > 0 && (
-            <section aria-label="Popular Exams" className="space-y-5">
-              <div className="flex items-center gap-3">
-                <h2 className="text-lg font-bold tracking-wide text-slate-200">
-                  🔥 Popular Exams
+            <section aria-label="Popular Exams">
+              <div className="mb-5 flex items-center gap-3">
+                <h2
+                  className="font-semibold text-ff-foreground"
+                  style={{ fontSize: "var(--ff-text-h4-size)" }}
+                >
+                  Popular Exams
                 </h2>
-                <span className="inline-flex items-center rounded-full border border-slate-600/60 bg-slate-700/50 px-2.5 py-0.5 text-xs font-semibold text-slate-300">
+                <span
+                  className={[
+                    "inline-flex items-center rounded-ff-pill",
+                    "border border-ff-border bg-ff-surface-subtle",
+                    "px-2.5 py-0.5 font-semibold text-ff-foreground-secondary",
+                  ].join(" ")}
+                  style={{ fontSize: "var(--ff-text-caption-size)" }}
+                >
                   {popularExams.length}
                 </span>
               </div>
-              <div className="h-px bg-gradient-to-r from-orange-500/40 via-slate-700/50 to-transparent" />
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+
+              <div className="mb-5 h-px bg-ff-border" />
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {popularExams.map((exam) => (
-                  <ExamCard key={exam.id} exam={exam} popular />
+                  <ExamStandardCard key={exam.id} exam={exam} popular />
                 ))}
               </div>
             </section>
           )}
 
-          {/* ── 📚 All Exams ── */}
+          {/* ── All Exams ── */}
           {allExams.length > 0 && (
-            <section aria-label="All Exams" className="space-y-5">
-              <div className="flex items-center gap-3">
-                <h2 className="text-lg font-bold tracking-wide text-slate-200">
-                  📚 All Exams
+            <section aria-label="All Exams">
+              <div className="mb-5 flex items-center gap-3">
+                <h2
+                  className="font-semibold text-ff-foreground"
+                  style={{ fontSize: "var(--ff-text-h4-size)" }}
+                >
+                  All Exams
                 </h2>
-                <span className="inline-flex items-center rounded-full border border-slate-600/60 bg-slate-700/50 px-2.5 py-0.5 text-xs font-semibold text-slate-300">
+                <span
+                  className={[
+                    "inline-flex items-center rounded-ff-pill",
+                    "border border-ff-border bg-ff-surface-subtle",
+                    "px-2.5 py-0.5 font-semibold text-ff-foreground-secondary",
+                  ].join(" ")}
+                  style={{ fontSize: "var(--ff-text-caption-size)" }}
+                >
                   {allExams.length}
                 </span>
               </div>
-              <div className="h-px bg-gradient-to-r from-slate-700 via-slate-700/50 to-transparent" />
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+
+              <div className="mb-5 h-px bg-ff-border" />
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {allExams.map((exam) => (
-                  <ExamCard key={exam.id} exam={exam} />
+                  <ExamStandardCard key={exam.id} exam={exam} />
                 ))}
               </div>
             </section>
           )}
-
         </div>
       </main>
     </>

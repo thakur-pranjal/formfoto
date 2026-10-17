@@ -3,9 +3,15 @@ import { CountryVisaConfig, VisaPassportConfig } from './types';
 
 import { australiaVisaConfig } from './australia-visa';
 import { canadaVisaConfig } from './canada-visa';
+import { chinaVisaConfig } from './china-visa';
 import { indiaVisaConfig } from './india-visa';
+import { irelandVisaConfig } from './ireland-visa';
+import { israelVisaConfig } from './israel-visa';
 import { japanVisaConfig } from './japan-visa';
+import { mexicoVisaConfig } from './mexico-visa';
 import { newZealandVisaConfig } from './new-zealand-visa';
+import { omanVisaConfig } from './oman-visa';
+import { qatarVisaConfig } from './qatar-visa';
 import { saudiArabiaVisaConfig } from './saudi-arabia-visa';
 import { schengenVisaConfig } from './schengen-visa';
 import { singaporeVisaConfig } from './singapore-visa';
@@ -18,9 +24,15 @@ import { usVisaConfig } from './us-visa';
 export const visaCountries: CountryVisaConfig[] = [
   australiaVisaConfig,
   canadaVisaConfig,
+  chinaVisaConfig,
   indiaVisaConfig,
+  irelandVisaConfig,
+  israelVisaConfig,
   japanVisaConfig,
+  mexicoVisaConfig,
   newZealandVisaConfig,
+  omanVisaConfig,
+  qatarVisaConfig,
   saudiArabiaVisaConfig,
   schengenVisaConfig,
   singaporeVisaConfig,

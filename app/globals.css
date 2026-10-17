@@ -2,6 +2,212 @@
 
 @source "../src/**/*.{js,ts,jsx,tsx,mdx}";
 
+/* ============================================================
+   FORMFOTO DESIGN TOKENS — Phase 1A
+   Centralized token foundation for the FormFoto redesign.
+   These tokens are additive and do not restyle existing pages.
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   A. BRAND PALETTE
+   Primary brand: #315CEA
+   Generates utilities like bg-brand-500, text-brand-600, etc.
+   ------------------------------------------------------------ */
+@theme {
+    --color-brand-50: #EFF4FF;
+    --color-brand-100: #DCE7FF;
+    --color-brand-200: #BED1FF;
+    --color-brand-300: #91B2FF;
+    --color-brand-400: #628AFF;
+    --color-brand-500: #315CEA;
+    --color-brand-600: #2548CC;
+    --color-brand-700: #203BA6;
+    --color-brand-800: #1D327F;
+    --color-brand-900: #1C2B5F;
+}
+
+/* ------------------------------------------------------------
+   B. NEUTRAL & SEMANTIC COLORS
+   Surface, foreground, border, canvas, and status colors.
+   Generates utilities like bg-ff-background, text-ff-foreground, etc.
+   Prefixed with ff- to avoid collisions with Tailwind defaults.
+   ------------------------------------------------------------ */
+@theme {
+    /* Surfaces & backgrounds */
+    --color-ff-background: #F7F8FA;
+    --color-ff-surface: #FFFFFF;
+    --color-ff-surface-subtle: #F1F3F6;
+
+    /* Text */
+    --color-ff-foreground: #151B28;
+    --color-ff-foreground-secondary: #475467;
+    --color-ff-foreground-muted: #667085;
+
+    /* Borders */
+    --color-ff-border: #E1E5EC;
+    --color-ff-border-strong: #CBD2DE;
+
+    /* Dark canvas for photo-editing workspaces */
+    --color-ff-canvas: #151B28;
+    --color-ff-canvas-surface: #1E2635;
+
+    /* Status: success */
+    --color-ff-success: #16A34A;
+    --color-ff-success-light: #DCFCE7;
+    --color-ff-success-dark: #15803D;
+
+    /* Status: warning */
+    --color-ff-warning: #D97706;
+    --color-ff-warning-light: #FEF3C7;
+    --color-ff-warning-dark: #B45309;
+
+    /* Status: error */
+    --color-ff-error: #DC2626;
+    --color-ff-error-light: #FEE2E2;
+    --color-ff-error-dark: #B91C1C;
+
+    /* Status: info */
+    --color-ff-info: #2563EB;
+    --color-ff-info-light: #DBEAFE;
+    --color-ff-info-dark: #1D4ED8;
+}
+
+/* ------------------------------------------------------------
+   D. SPACING TOKENS
+   4px base unit. Prefixed with ff- to remain additive.
+   Generates utilities like p-ff-1 (4px), m-ff-4 (16px), etc.
+   ------------------------------------------------------------ */
+@theme {
+    --spacing-ff-1: 4px;
+    --spacing-ff-2: 8px;
+    --spacing-ff-3: 12px;
+    --spacing-ff-4: 16px;
+    --spacing-ff-5: 20px;
+    --spacing-ff-6: 24px;
+    --spacing-ff-8: 32px;
+    --spacing-ff-10: 40px;
+    --spacing-ff-12: 48px;
+    --spacing-ff-16: 64px;
+
+    /* Layout-level semantic spacing */
+    --spacing-ff-page-gutter: 24px;
+    --spacing-ff-section-gap: 48px;
+    --spacing-ff-content-max: 1200px;
+}
+
+/* ------------------------------------------------------------
+   E. RADIUS TOKENS
+   Consistent corner radius scale. Prefixed with ff-.
+   Generates utilities like rounded-ff-sm, rounded-ff-md, etc.
+   ------------------------------------------------------------ */
+@theme {
+    --radius-ff-sm: 4px;
+    --radius-ff-md: 8px;
+    --radius-ff-lg: 12px;
+    --radius-ff-xl: 16px;
+    --radius-ff-pill: 9999px;
+}
+
+/* ------------------------------------------------------------
+   F. SHADOW TOKENS
+   Subtle, neutral surface elevation. Prefixed with ff-.
+   Generates utilities like shadow-ff-sm, shadow-ff-md, etc.
+   ------------------------------------------------------------ */
+@theme {
+    --shadow-ff-sm: 0 1px 2px 0 rgba(21, 27, 40, 0.05);
+    --shadow-ff-md: 0 4px 12px -2px rgba(21, 27, 40, 0.08), 0 2px 4px -2px rgba(21, 27, 40, 0.04);
+    --shadow-ff-lg: 0 12px 32px -4px rgba(21, 27, 40, 0.12), 0 4px 8px -2px rgba(21, 27, 40, 0.06);
+}
+
+/* ------------------------------------------------------------
+   C. TYPOGRAPHY TOKENS
+   G. FOCUS & INTERACTION TOKENS
+   F (cont). BORDER TOKENS
+   Semantic CSS custom properties for direct component use.
+   These do not generate Tailwind utilities.
+   ------------------------------------------------------------ */
+:root {
+    /* --- Typography ---
+       Reuses Geist font variables from layout.tsx:
+       --font-geist-sans and --font-geist-mono */
+
+    --ff-font-sans: var(--font-geist-sans);
+    --ff-font-mono: var(--font-geist-mono);
+
+    /* Display: hero / marketing headings */
+    --ff-text-display-size: 48px;
+    --ff-text-display-height: 56px;
+    --ff-text-display-weight: 600;
+
+    /* H1: page-level heading */
+    --ff-text-h1-size: 36px;
+    --ff-text-h1-height: 44px;
+    --ff-text-h1-weight: 600;
+
+    /* H2: section heading */
+    --ff-text-h2-size: 28px;
+    --ff-text-h2-height: 36px;
+    --ff-text-h2-weight: 600;
+
+    /* H3: subsection heading */
+    --ff-text-h3-size: 22px;
+    --ff-text-h3-height: 30px;
+    --ff-text-h3-weight: 600;
+
+    /* H4: minor heading */
+    --ff-text-h4-size: 18px;
+    --ff-text-h4-height: 26px;
+    --ff-text-h4-weight: 500;
+
+    /* Body large: emphasized body */
+    --ff-text-body-lg-size: 16px;
+    --ff-text-body-lg-height: 24px;
+    --ff-text-body-lg-weight: 400;
+
+    /* Body: standard body text */
+    --ff-text-body-size: 14px;
+    --ff-text-body-height: 22px;
+    --ff-text-body-weight: 400;
+
+    /* Small: supporting text */
+    --ff-text-small-size: 13px;
+    --ff-text-small-height: 20px;
+    --ff-text-small-weight: 400;
+
+    /* Caption: labels, metadata */
+    --ff-text-caption-size: 12px;
+    --ff-text-caption-height: 16px;
+    --ff-text-caption-weight: 500;
+
+    /* --- Emphasis weights --- */
+    --ff-weight-normal: 400;
+    --ff-weight-medium: 500;
+    --ff-weight-semibold: 600;
+
+    /* --- Focus ring --- */
+    --ff-focus-color: #315CEA;
+    --ff-focus-width: 2px;
+    --ff-focus-offset: 2px;
+
+    /* --- Transition durations --- */
+    --ff-duration-fast: 120ms;
+    --ff-duration-normal: 180ms;
+    --ff-duration-deliberate: 240ms;
+
+    /* --- Easing --- */
+    --ff-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+    /* --- Border tokens (semantic aliases) --- */
+    --ff-border-color: #E1E5EC;
+    --ff-border-color-strong: #CBD2DE;
+    --ff-border-width: 1px;
+    --ff-border-soft: 1px solid rgba(225, 229, 236, 0.6);
+}
+
+/* ============================================================
+   EXISTING BASE RULES — preserved from original globals.css
+   ============================================================ */
+
 @layer base {
 
     /* 1. NUKE IT ALL: No I-beams, no highlighting anywhere */
