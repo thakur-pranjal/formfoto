@@ -196,7 +196,7 @@ const AIProcessingOverlay = ({ stage }: { stage: "optimizing" | "removing" }) =>
     </div>
     <div className="relative flex items-center justify-center">
       <div
-        className="h-16 w-16 rounded-full bg-gradient-to-tr from-emerald-500 via-teal-500 to-cyan-500 shadow-[0_0_40px_rgba(20,184,166,0.6)] animate-pulse"
+        className="h-16 w-16 rounded-full bg-gradient-to-tr from-brand-500 via-brand-400 to-brand-300 shadow-[0_0_40px_rgba(49,92,234,0.5)] animate-pulse"
         style={{ animationDuration: "2.4s" }}
       />
     </div>
@@ -218,10 +218,9 @@ const AIProcessingOverlay = ({ stage }: { stage: "optimizing" | "removing" }) =>
 
 interface BiometricGuideProps {
   config: VisaPassportConfig;
-  accentColor: string; // CSS colour string, e.g. "rgb(16,185,129)"
 }
 
-function BiometricGuideOverlay({ config, accentColor }: BiometricGuideProps) {
+function BiometricGuideOverlay({ config }: BiometricGuideProps) {
   const { headRatioMin, headRatioMax, eyeLinePercentFromBottom } = config.biometrics;
 
   // All positions are expressed as % of the crop-box height.
@@ -249,6 +248,10 @@ function BiometricGuideOverlay({ config, accentColor }: BiometricGuideProps) {
   const ovalRx = 22; // horizontal radius %
   const ovalRy = (chinPct - crownPct) / 2; // vertical radius %
 
+  // Brand colour for SVG (brand-400 hex)
+  const brandColor = "#628AFF";
+  const eyeColor = "#f59e0b";
+
   return (
     <svg
       viewBox="0 0 100 100"
@@ -269,7 +272,7 @@ function BiometricGuideOverlay({ config, accentColor }: BiometricGuideProps) {
       {/* Crown line */}
       <line
         x1="5" y1={crownPct} x2="95" y2={crownPct}
-        stroke={accentColor}
+        stroke={brandColor}
         strokeWidth="0.4"
         strokeDasharray="2 1.5"
         opacity="0.9"
@@ -278,7 +281,7 @@ function BiometricGuideOverlay({ config, accentColor }: BiometricGuideProps) {
       <text
         x="15" y={crownPct - 1.2}
         fontSize="3.2"
-        fill={accentColor}
+        fill={brandColor}
         textAnchor="start"
         opacity="0.9"
         style={{ fontFamily: "sans-serif" }}
@@ -289,7 +292,7 @@ function BiometricGuideOverlay({ config, accentColor }: BiometricGuideProps) {
       {/* Eye line */}
       <line
         x1="5" y1={eyeLinePct} x2="95" y2={eyeLinePct}
-        stroke="#f59e0b"
+        stroke={eyeColor}
         strokeWidth="0.35"
         strokeDasharray="1.5 1.5"
         opacity="0.85"
@@ -298,7 +301,7 @@ function BiometricGuideOverlay({ config, accentColor }: BiometricGuideProps) {
       <text
         x="15" y={eyeLinePct - 1}
         fontSize="3.2"
-        fill="#f59e0b"
+        fill={eyeColor}
         textAnchor="start"
         opacity="0.9"
         style={{ fontFamily: "sans-serif" }}
@@ -309,7 +312,7 @@ function BiometricGuideOverlay({ config, accentColor }: BiometricGuideProps) {
       {/* Chin line */}
       <line
         x1="5" y1={chinPct} x2="95" y2={chinPct}
-        stroke={accentColor}
+        stroke={brandColor}
         strokeWidth="0.4"
         strokeDasharray="2 1.5"
         opacity="0.9"
@@ -318,7 +321,7 @@ function BiometricGuideOverlay({ config, accentColor }: BiometricGuideProps) {
       <text
         x="15" y={chinPct + 3.5}
         fontSize="3.2"
-        fill={accentColor}
+        fill={brandColor}
         textAnchor="start"
         opacity="0.9"
         style={{ fontFamily: "sans-serif" }}
@@ -333,7 +336,7 @@ function BiometricGuideOverlay({ config, accentColor }: BiometricGuideProps) {
         rx={ovalRx}
         ry={ovalRy}
         fill="none"
-        stroke={accentColor}
+        stroke={brandColor}
         strokeWidth="0.45"
         strokeDasharray="3 1.5"
         opacity="0.65"
@@ -345,7 +348,7 @@ function BiometricGuideOverlay({ config, accentColor }: BiometricGuideProps) {
         x="0" y={crownPct}
         width="100"
         height={chinPct - crownPct}
-        fill={accentColor}
+        fill={brandColor}
         opacity="0.05"
       />
     </svg>
@@ -353,7 +356,7 @@ function BiometricGuideOverlay({ config, accentColor }: BiometricGuideProps) {
 }
 
 // ---------------------------------------------------------------------------
-// CompliancePanel — Premium glassmorphic HUD
+// CompliancePanel — Light-First Pre-Flight Inspector
 // ---------------------------------------------------------------------------
 
 interface CompliancePanelProps {
@@ -361,53 +364,51 @@ interface CompliancePanelProps {
   mode: "passport" | "visa";
   pixelWidth: number;
   pixelHeight: number;
-  accentClass: string;
 }
 
 function CompliancePanel({
   config,
   pixelWidth,
   pixelHeight,
-  accentClass,
 }: CompliancePanelProps) {
   const { biometrics, background, physical, sourceVerification } = config;
 
   return (
-    <div className="bg-slate-900/60 border border-slate-800 backdrop-blur-md rounded-2xl p-6 space-y-5">
+    <div className="bg-ff-surface border border-ff-border rounded-ff-lg shadow-ff-sm p-ff-6 flex flex-col gap-ff-6">
 
       {/* ── Header ─────────────────────────────────────────── */}
       <div className="flex items-center gap-2">
-        <ShieldCheck className={`h-4 w-4 ${accentClass}`} />
-        <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400">
-          Official Compliance Checklist
+        <ShieldCheck className="h-4 w-4 text-brand-500" />
+        <h3 className="text-[11px] font-bold uppercase tracking-widest text-ff-foreground-muted font-mono">
+          Pre-Flight Checklist
         </h3>
       </div>
 
       {/* ── Data rows ──────────────────────────────────────── */}
-      <div className="divide-y divide-slate-800/50">
+      <div className="divide-y divide-ff-border">
 
         {/* Background */}
         <div className="flex items-center justify-between py-2.5">
-          <span className="text-xs text-slate-500 font-medium">Background</span>
+          <span className="text-[11px] font-mono uppercase tracking-wider text-ff-foreground-muted">Background</span>
           <div className="flex items-center gap-2">
             <div
-              className="h-4 w-4 rounded-full border border-slate-600 flex-shrink-0 shadow-inner"
+              className="h-4 w-4 rounded-full border border-ff-border-strong flex-shrink-0 shadow-inner"
               style={{ backgroundColor: background.requiredHex }}
               title={background.requiredHex}
             />
-            <span className="text-xs font-semibold text-white">{background.label}</span>
-            <span className="text-[10px] font-mono text-slate-600">{background.requiredHex}</span>
+            <span className="text-xs font-semibold text-ff-foreground">{background.label}</span>
+            <span className="text-[10px] font-mono text-ff-foreground-muted">{background.requiredHex}</span>
           </div>
         </div>
 
         {/* Dimensions + DPI */}
         <div className="flex items-center justify-between py-2.5">
-          <span className="text-xs text-slate-500 font-medium">Dimensions</span>
+          <span className="text-[11px] font-mono uppercase tracking-wider text-ff-foreground-muted">Dimensions</span>
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-white">
+            <span className="text-xs font-semibold text-ff-foreground">
               {physical.widthMm} × {physical.heightMm} mm
             </span>
-            <span className="rounded-md bg-slate-800 px-1.5 py-0.5 text-[10px] font-mono text-slate-400">
+            <span className="rounded-ff-sm bg-ff-surface-subtle border border-ff-border px-1.5 py-0.5 text-[10px] font-mono text-ff-foreground-muted">
               {physical.targetDpi} DPI
             </span>
           </div>
@@ -415,27 +416,27 @@ function CompliancePanel({
 
         {/* Digital size */}
         <div className="flex items-center justify-between py-2.5">
-          <span className="text-xs text-slate-500 font-medium">Digital Size</span>
-          <span className="text-xs font-semibold text-white">
+          <span className="text-[11px] font-mono uppercase tracking-wider text-ff-foreground-muted">Digital Size</span>
+          <span className="text-xs font-semibold text-ff-foreground">
             {pixelWidth} × {pixelHeight} px
           </span>
         </div>
 
         {/* Paper finish */}
         <div className="flex items-center justify-between py-2.5">
-          <span className="text-xs text-slate-500 font-medium">Finish</span>
-          <span className="text-xs font-semibold text-white capitalize">{physical.paperFinish}</span>
+          <span className="text-[11px] font-mono uppercase tracking-wider text-ff-foreground-muted">Finish</span>
+          <span className="text-xs font-semibold text-ff-foreground capitalize">{physical.paperFinish}</span>
         </div>
 
         {/* Glasses */}
         <div className="flex items-center justify-between py-2.5">
-          <span className="text-xs text-slate-500 font-medium">Glasses</span>
+          <span className="text-[11px] font-mono uppercase tracking-wider text-ff-foreground-muted">Glasses</span>
           {biometrics.glassesAllowed ? (
-            <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-400">
+            <span className="flex items-center gap-1.5 text-xs font-semibold text-ff-success">
               <CheckCircle2 className="h-3.5 w-3.5" /> Allowed
             </span>
           ) : (
-            <span className="flex items-center gap-1.5 text-xs font-semibold text-rose-400">
+            <span className="flex items-center gap-1.5 text-xs font-semibold text-ff-error">
               <XCircle className="h-3.5 w-3.5" /> Prohibited
             </span>
           )}
@@ -443,13 +444,13 @@ function CompliancePanel({
 
         {/* Smile */}
         <div className="flex items-center justify-between py-2.5">
-          <span className="text-xs text-slate-500 font-medium">Smile</span>
+          <span className="text-[11px] font-mono uppercase tracking-wider text-ff-foreground-muted">Smile</span>
           {biometrics.smileAllowed ? (
-            <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-400">
+            <span className="flex items-center gap-1.5 text-xs font-semibold text-ff-success">
               <CheckCircle2 className="h-3.5 w-3.5" /> Allowed
             </span>
           ) : (
-            <span className="flex items-center gap-1.5 text-xs font-semibold text-rose-400">
+            <span className="flex items-center gap-1.5 text-xs font-semibold text-ff-error">
               <XCircle className="h-3.5 w-3.5" /> Neutral only
             </span>
           )}
@@ -457,16 +458,16 @@ function CompliancePanel({
 
         {/* Shoulders */}
         <div className="flex items-center justify-between py-2.5">
-          <span className="text-xs text-slate-500 font-medium">Shoulders</span>
-          <span className="text-xs font-semibold text-white">
+          <span className="text-[11px] font-mono uppercase tracking-wider text-ff-foreground-muted">Shoulders</span>
+          <span className="text-xs font-semibold text-ff-foreground">
             {biometrics.shouldersVisible ? "Must be visible" : "Not required"}
           </span>
         </div>
 
         {/* Face / Frame ratio */}
         <div className="flex items-center justify-between py-2.5">
-          <span className="text-xs text-slate-500 font-medium">Face / Frame</span>
-          <span className="text-xs font-semibold text-white">
+          <span className="text-[11px] font-mono uppercase tracking-wider text-ff-foreground-muted">Face / Frame</span>
+          <span className="text-xs font-semibold text-ff-foreground">
             {Math.round(biometrics.headRatioMin * 100)}–{Math.round(biometrics.headRatioMax * 100)}% of height
           </span>
         </div>
@@ -475,36 +476,36 @@ function CompliancePanel({
 
       {/* ── Attire / contrast warning ───────────────────────── */}
       {biometrics.contrastWarning && (
-        <div className="flex items-start gap-3 rounded-xl border-l-4 border-amber-500 bg-amber-500/10 p-3">
-          <AlertTriangle className="h-4 w-4 text-amber-400 mt-0.5 flex-shrink-0" />
-          <p className="text-xs text-amber-200/90 leading-relaxed">
-            <span className="font-semibold text-amber-300">Attire:</span> Dark clothing strongly recommended to contrast the white background. Light or white tops risk rejection.
+        <div className="flex items-start gap-3 rounded-ff-md border-l-4 border-ff-warning bg-ff-warning-light p-3">
+          <AlertTriangle className="h-4 w-4 text-ff-warning mt-0.5 flex-shrink-0" />
+          <p className="text-xs text-ff-foreground-secondary leading-relaxed">
+            <span className="font-semibold text-ff-warning-dark">Attire:</span> Dark clothing strongly recommended to contrast the white background. Light or white tops risk rejection.
           </p>
         </div>
       )}
 
       {/* ── Infant rules ─────────────────────────────────────── */}
       {config.infantRules?.applicable && config.infantRules.relaxedConstraints && (
-        <div className="flex items-start gap-3 rounded-xl border border-blue-500/30 bg-blue-500/10 p-3">
-          <ShieldCheck className="h-4 w-4 text-blue-400 mt-0.5 flex-shrink-0" />
-          <p className="text-xs text-blue-300 leading-relaxed">
+        <div className="flex items-start gap-3 rounded-ff-md border border-ff-info/30 bg-ff-info-light p-3">
+          <ShieldCheck className="h-4 w-4 text-ff-info mt-0.5 flex-shrink-0" />
+          <p className="text-xs text-ff-info-dark leading-relaxed">
             <span className="font-semibold">Infants:</span> {config.infantRules.relaxedConstraints}
           </p>
         </div>
       )}
 
       {/* ── Authority footer ─────────────────────────────────── */}
-      <div className="border-t border-slate-800/60 pt-4 space-y-1">
-        <p className="text-[11px] text-slate-600">
+      <div className="border-t border-ff-border pt-4 space-y-1">
+        <p className="text-[11px] text-ff-foreground-muted">
           Verified by{" "}
-          <span className="text-slate-500 font-medium">{sourceVerification.authority}</span>
+          <span className="text-ff-foreground-secondary font-medium">{sourceVerification.authority}</span>
           {" · "}Last verified {sourceVerification.lastVerifiedDate}
         </p>
         <a
           href={sourceVerification.officialUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 text-[11px] text-slate-600 hover:text-slate-300 transition-colors"
+          className="inline-flex items-center gap-1 text-[11px] text-ff-foreground-muted hover:text-brand-600 transition-colors duration-[120ms]"
         >
           Official guidelines <ExternalLink className="h-3 w-3" />
         </a>
@@ -527,24 +528,6 @@ export default function BiometricStudio({ config, mode }: BiometricStudioProps) 
   const aspectRatio = config.aspectRatio;
   const { width: pixelWidth, height: pixelHeight } = derivePixelDimensions(config);
   const { minKb, maxKb } = deriveKbLimits(config);
-
-  const isPassport = mode === "passport";
-  // ── Palette engine ─────────────────────────────────────────────────────────
-  const accentGradient = isPassport
-    ? "from-emerald-500 to-teal-500"
-    : "from-amber-400 to-orange-500";
-  const accentText    = isPassport ? "text-emerald-400"              : "text-amber-400";
-  const accentBorder  = isPassport ? "border-emerald-500/40"         : "border-amber-500/40";
-  const accentBg      = isPassport ? "bg-emerald-500/10"             : "bg-amber-500/10";
-  const accentRing    = isPassport ? "focus-visible:ring-emerald-400" : "focus-visible:ring-amber-400";
-  const accentSvgColor = isPassport ? "rgb(16,185,129)"              : "rgb(251,146,60)";
-  // Primary CTA gradient + shadow (used on Digital Submission button)
-  const accentCta = isPassport
-    ? "bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950"
-    : "bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-slate-950";
-  const accentCtaShadow = isPassport
-    ? "shadow-emerald-950/40"
-    : "shadow-amber-950/40";
 
   // State
   const [imageSrc, setImageSrc] = useState<string | null>(null);
@@ -952,63 +935,63 @@ export default function BiometricStudio({ config, mode }: BiometricStudioProps) 
   // Render
   // ---------------------------------------------------------------------------
 
+  // Compression gauge: map displayTargetKb to a 0-100 fill %
+  const gaugePercent = maxKb > minKb
+    ? Math.round(((displayTargetKb - minKb) / (maxKb - minKb)) * 100)
+    : 50;
+
   return (
-    <div className="w-full space-y-5">
-      {/* ─── Spec strip ───────────────────────────────────── */}
-      <div
-        className={`flex flex-wrap items-center gap-3 rounded-xl border ${accentBorder} px-4 py-2.5`}
-        style={{ background: "rgba(15,23,42,0.6)" }}
-      >
-        <div className={`flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest ${accentText}`}>
+    <div className="w-full space-y-4">
+
+      {/* ─── Spec strip ──────────────────────────────────────── */}
+      <div className="flex flex-wrap items-center gap-3 rounded-ff-lg border border-ff-border bg-ff-surface-subtle px-4 py-2.5">
+        <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-brand-600">
           <ShieldCheck className="h-3.5 w-3.5" />
-          {isPassport ? "Passport" : "Visa"} Photo Studio
+          {mode === "passport" ? "Passport" : "Visa"} Photo Studio
         </div>
-        <div className="ml-auto flex flex-wrap items-center gap-1.5 text-[11px] text-slate-500">
-          <span className="rounded bg-slate-800/80 px-1.5 py-0.5 font-mono text-slate-400">
+        <div className="ml-auto flex flex-wrap items-center gap-1.5 text-[11px] text-ff-foreground-muted">
+          <span className="rounded-ff-sm border border-ff-border bg-ff-surface px-1.5 py-0.5 font-mono">
             {config.physical.widthMm}×{config.physical.heightMm} mm
           </span>
-          <span className="rounded bg-slate-800/80 px-1.5 py-0.5 font-mono text-slate-400">
+          <span className="rounded-ff-sm border border-ff-border bg-ff-surface px-1.5 py-0.5 font-mono">
             {pixelWidth}×{pixelHeight} px
           </span>
-          <span className="rounded bg-slate-800/80 px-1.5 py-0.5 font-mono text-slate-400">
+          <span className="rounded-ff-sm border border-ff-border bg-ff-surface px-1.5 py-0.5 font-mono">
             {config.physical.targetDpi} DPI
           </span>
         </div>
       </div>
 
-      {/* ─── Main grid: workspace (left 8) + sidebar (right 4) ─── */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+      {/* ─── Main 2-column grid ───────────────────────────────── */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_380px]">
 
-        {/* ═══ LEFT COLUMN — Workspace (col-span-8) ═══ */}
-        <div className="col-span-1 space-y-4 lg:col-span-8">
+        {/* ═══ LEFT COLUMN — Dark Optical Stage ═══ */}
+        <div className="space-y-3">
 
           {/* Dropzone */}
           {!imageSrc && (
             <div
               {...getRootProps()}
-              className={`group flex min-h-[400px] cursor-pointer items-center justify-center rounded-2xl border-2 border-dashed p-10 text-white transition-all duration-200 focus:outline-none focus-visible:ring-2 ${accentRing} ${
+              className={`group flex min-h-[420px] cursor-pointer items-center justify-center rounded-ff-lg border-2 border-dashed p-10 transition-all duration-[180ms] focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${
                 isDragActive
-                  ? `border-current ${accentText} bg-slate-900/60`
-                  : "border-slate-700/60 bg-slate-950/60 hover:border-slate-500 hover:bg-slate-900/40"
+                  ? "border-brand-400 bg-ff-canvas/80 text-white"
+                  : "border-ff-border-strong bg-ff-canvas hover:border-brand-400 hover:bg-ff-canvas"
               }`}
               style={{
-                backgroundImage: "radial-gradient(circle, rgba(148,163,184,0.04) 1px, transparent 1px)",
+                backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px)",
                 backgroundSize: "16px 16px",
               }}
             >
               <input {...getInputProps()} />
               <div className="space-y-4 text-center">
-                <div
-                  className={`mx-auto flex h-16 w-16 items-center justify-center rounded-2xl ${accentBg} ${accentText} shadow-lg`}
-                  style={{ backdropFilter: "blur(8px)" }}
-                >
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-ff-lg bg-brand-500/20 text-brand-400 shadow-lg">
                   <Upload className="h-7 w-7" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-slate-200">
+                  <p className="text-sm font-semibold text-white/80">
                     {isDragActive ? "Drop your photo here" : "Drop your photo here, or click to browse"}
                   </p>
-                  <p className="mt-1.5 text-xs text-slate-500">
+                  <p className="mt-1.5 text-xs text-white/40">
                     JPG · PNG · WEBP &nbsp;·&nbsp; Front-facing, well-lit portrait recommended
                   </p>
                 </div>
@@ -1020,65 +1003,75 @@ export default function BiometricStudio({ config, mode }: BiometricStudioProps) 
           {imageSrc && (
             <div className="space-y-3">
 
-              {/* Premium dark canvas wrapper */}
+              {/* Dark Optical Stage — recessed dark container */}
               <div
-                className="relative flex items-center justify-center overflow-hidden rounded-2xl border border-slate-800/60 shadow-inner"
-                style={{
-                  background: "#060a14",
-                  backgroundImage:
-                    "radial-gradient(circle, rgba(148,163,184,0.04) 1px, transparent 1px)",
-                  backgroundSize: "16px 16px",
-                  minHeight: "400px",
-                }}
+                className="bg-ff-canvas border border-ff-border-strong rounded-ff-lg overflow-hidden shadow-[inset_0_2px_8px_rgba(0,0,0,0.4)]"
               >
-                {/* Inner wrapper — ref'd by ResizeObserver (Phase 1) */}
-                <div className="relative" ref={imageContainerRef}>
-                  <ReactCrop
-                    crop={crop}
-                    onChange={(_c, percentCrop) => setCrop(percentCrop)}
-                    onComplete={(c) => setCompletedCrop(c)}
-                    aspect={aspectRatio}
-                    keepSelection
-                    className="max-h-[62vh]"
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={imageSrc}
-                      alt="Uploaded photo"
-                      onLoad={onImageLoad}
-                      className="max-h-[62vh] max-w-full"
-                    />
-                  </ReactCrop>
-
-                  {/* Biometric guide overlay — pinned via ResizeObserver dims (Phase 1) */}
-                  {showGuide && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: 0,
-                        left: overlayDims.left,
-                        width: overlayDims.width || "100%",
-                        height: overlayDims.height || "100%",
-                        pointerEvents: "none",
-                        zIndex: 10,
-                      }}
+                {/* Canvas area */}
+                <div
+                  className="relative flex items-center justify-center"
+                  style={{
+                    backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.025) 1px, transparent 1px)",
+                    backgroundSize: "16px 16px",
+                    minHeight: "400px",
+                  }}
+                >
+                  {/* Inner wrapper — ref'd by ResizeObserver */}
+                  <div className="relative" ref={imageContainerRef}>
+                    <ReactCrop
+                      crop={crop}
+                      onChange={(_c, percentCrop) => setCrop(percentCrop)}
+                      onComplete={(c) => setCompletedCrop(c)}
+                      aspect={aspectRatio}
+                      keepSelection
+                      className="max-h-[62vh]"
                     >
-                      <BiometricGuideOverlay
-                        config={config}
-                        accentColor={accentSvgColor}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={imageSrc}
+                        alt="Uploaded photo"
+                        onLoad={onImageLoad}
+                        className="max-h-[62vh] max-w-full"
                       />
-                    </div>
-                  )}
+                    </ReactCrop>
 
-                  {/* BG removal processing overlay */}
-                  {isRemovingBg && removeBgStage !== "idle" && (
-                    <AIProcessingOverlay stage={removeBgStage} />
+                    {/* Biometric guide overlay — pinned via ResizeObserver dims */}
+                    {showGuide && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: 0,
+                          left: overlayDims.left,
+                          width: overlayDims.width || "100%",
+                          height: overlayDims.height || "100%",
+                          pointerEvents: "none",
+                          zIndex: 10,
+                        }}
+                      >
+                        <BiometricGuideOverlay config={config} />
+                      </div>
+                    )}
+
+                    {/* BG removal processing overlay */}
+                    {isRemovingBg && removeBgStage !== "idle" && (
+                      <AIProcessingOverlay stage={removeBgStage} />
+                    )}
+                  </div>
+                </div>
+
+                {/* Live Telemetry Ticker Bar */}
+                <div className="bg-ff-canvas-surface border-t border-ff-border-strong/50 px-ff-4 py-ff-2 text-center font-mono text-[11px] tracking-wider text-ff-foreground-muted uppercase">
+                  {pixelWidth} × {pixelHeight} px · {config.physical.targetDpi} DPI · {config.physical.widthMm}×{config.physical.heightMm} mm
+                  {completedCrop ? (
+                    <span className="ml-3 text-brand-400">✓ crop active</span>
+                  ) : (
+                    <span className="ml-3 text-white/30">— awaiting crop</span>
                   )}
                 </div>
               </div>
 
               {/* ─── Pill Toolbar ─────────────────────────────── */}
-              <div className="flex items-center justify-between rounded-full border border-slate-800 bg-slate-900 p-1.5">
+              <div className="flex items-center justify-between rounded-ff-pill border border-ff-border bg-ff-surface p-1.5 shadow-ff-sm">
 
                 {/* Left cluster: Change Photo + Remove BG */}
                 <div className="flex items-center gap-1">
@@ -1093,21 +1086,21 @@ export default function BiometricStudio({ config, mode }: BiometricStudioProps) 
                       setPrintUrl(null);
                       setError(null);
                     }}
-                    className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-slate-300 transition hover:bg-slate-800 hover:text-white"
+                    className="inline-flex items-center gap-2 rounded-ff-pill px-4 py-2 text-sm font-medium text-ff-foreground-secondary transition hover:bg-ff-surface-subtle hover:text-ff-foreground"
                   >
                     <Upload className="h-3.5 w-3.5" />
                     Change Photo
                   </button>
 
                   {/* Divider */}
-                  <span className="h-5 w-px bg-slate-700/60" />
+                  <span className="h-5 w-px bg-ff-border" />
 
                   {/* Remove BG */}
                   <button
                     type="button"
                     onClick={handleRemoveBackground}
                     disabled={isRemovingBg || !imageSrc}
-                    className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-slate-300 transition hover:bg-slate-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                    className="inline-flex items-center gap-2 rounded-ff-pill px-4 py-2 text-sm font-medium text-ff-foreground-secondary transition hover:bg-ff-surface-subtle hover:text-ff-foreground disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     {isRemovingBg ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -1126,10 +1119,10 @@ export default function BiometricStudio({ config, mode }: BiometricStudioProps) 
                 <button
                   type="button"
                   onClick={() => setShowGuide((v) => !v)}
-                  className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition ${
+                  className={`inline-flex items-center gap-2 rounded-ff-pill px-4 py-2 text-sm font-medium transition duration-[120ms] ${
                     showGuide
-                      ? `${accentBg} ${accentText} ${accentBorder} border`
-                      : "text-slate-500 hover:bg-slate-800 hover:text-slate-300"
+                      ? "bg-brand-50 text-brand-600 border border-brand-200"
+                      : "text-ff-foreground-muted hover:bg-ff-surface-subtle hover:text-ff-foreground"
                   }`}
                 >
                   {showGuide ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
@@ -1137,55 +1130,24 @@ export default function BiometricStudio({ config, mode }: BiometricStudioProps) 
                 </button>
               </div>
 
-              {/* ─── Target KB slider ─────────────────────────── */}
-              <div className="rounded-xl border border-slate-800/80 bg-slate-900/40 p-4 space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-semibold text-slate-300">
-                    Target Size{" "}
-                    <span className={`font-bold ${accentText}`}>{displayTargetKb} KB</span>
-                  </p>
-                  <span className="text-xs font-mono font-medium text-slate-500">
-                    {estimatedFileSize}
-                  </span>
-                </div>
-                <input
-                  type="range"
-                  min={minKb}
-                  max={maxKb}
-                  step={1}
-                  value={displayTargetKb}
-                  onChange={(e) => {
-                    const v = Math.round(Number(e.target.value));
-                    setDisplayTargetKb(v);
-                    setTargetKb(v);
-                  }}
-                  disabled={!completedCrop}
-                  className={`w-full disabled:opacity-30 ${isPassport ? "accent-emerald-500" : "accent-amber-500"}`}
-                />
-                <div className="flex justify-between text-[10px] font-mono text-slate-600">
-                  <span>{minKb} KB</span>
-                  <span>{maxKb} KB</span>
-                </div>
-              </div>
-
               {/* Error */}
               {error && (
-                <div className="flex items-start gap-2 rounded-lg border border-rose-500/20 bg-rose-500/8 p-3">
-                  <XCircle className="h-4 w-4 text-rose-400 mt-0.5 flex-shrink-0" />
-                  <p className="text-sm text-rose-300">{error}</p>
+                <div className="flex items-start gap-2 rounded-ff-md border border-ff-error/20 bg-ff-error-light p-3">
+                  <XCircle className="h-4 w-4 text-ff-error mt-0.5 flex-shrink-0" />
+                  <p className="text-sm text-ff-error-dark">{error}</p>
                 </div>
               )}
 
               {/* Disclaimer */}
-              <p className="text-[11px] leading-relaxed text-slate-600">
+              <p className="text-[11px] leading-relaxed text-ff-foreground-muted">
                 {config.sourceVerification.disclaimer}
               </p>
             </div>
           )}
         </div>
 
-        {/* ═══ RIGHT COLUMN — Compliance + Export (col-span-4) ═══ */}
-        <div className="col-span-1 space-y-6 lg:col-span-4 lg:sticky lg:top-6 lg:self-start">
+        {/* ═══ RIGHT COLUMN — Pre-Flight Inspector ═══ */}
+        <div className="space-y-4 lg:sticky lg:top-6 lg:self-start">
 
           {/* Compliance panel */}
           <CompliancePanel
@@ -1193,17 +1155,62 @@ export default function BiometricStudio({ config, mode }: BiometricStudioProps) 
             mode={mode}
             pixelWidth={pixelWidth}
             pixelHeight={pixelHeight}
-            accentClass={accentText}
           />
 
-          {/* Export CTAs */}
+          {/* ─── Compression Gauge ─────────────────────────── */}
+          <div className="bg-ff-surface border border-ff-border rounded-ff-lg shadow-ff-sm p-ff-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-mono uppercase tracking-wider text-ff-foreground-muted">
+                Target File Size
+              </span>
+              <span className="text-[11px] font-mono text-ff-foreground-secondary">
+                {estimatedFileSize}
+              </span>
+            </div>
+
+            {/* Technical mono readout */}
+            <div className="flex items-baseline gap-2">
+              <span className="font-mono text-2xl font-bold tabular-nums text-ff-foreground leading-none">
+                {displayTargetKb}
+              </span>
+              <span className="font-mono text-sm text-ff-foreground-muted">KB</span>
+              <span className="ml-auto font-mono text-[10px] text-ff-foreground-muted">
+                {minKb}–{maxKb} KB
+              </span>
+            </div>
+
+            {/* Segmented gauge track */}
+            <div className="relative h-2 w-full overflow-hidden rounded-ff-pill bg-ff-surface-subtle border border-ff-border">
+              <div
+                className="absolute inset-y-0 left-0 rounded-ff-pill bg-brand-500 transition-all duration-[120ms]"
+                style={{ width: `${gaugePercent}%` }}
+              />
+            </div>
+
+            <input
+              type="range"
+              min={minKb}
+              max={maxKb}
+              step={1}
+              value={displayTargetKb}
+              onChange={(e) => {
+                const v = Math.round(Number(e.target.value));
+                setDisplayTargetKb(v);
+                setTargetKb(v);
+              }}
+              disabled={!completedCrop}
+              className="w-full disabled:opacity-30 accent-brand-500"
+            />
+          </div>
+
+          {/* ─── Export Actions ─────────────────────────────── */}
           <div className="space-y-3">
             {/* Digital Submission */}
             <button
               type="button"
               onClick={exportDigital}
               disabled={!completedCrop || processing}
-              className={`group/btn flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold shadow-lg transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-40 ${accentCta} ${accentCtaShadow}`}
+              className="group/btn flex w-full items-center justify-center gap-2 rounded-ff-md bg-brand-500 hover:bg-brand-600 text-white py-3 text-sm font-semibold shadow-ff-sm transition-all duration-[180ms] disabled:cursor-not-allowed disabled:opacity-40"
             >
               {processing ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -1221,7 +1228,7 @@ export default function BiometricStudio({ config, mode }: BiometricStudioProps) 
               type="button"
               onClick={exportPrintSheet}
               disabled={!completedCrop || processing}
-              className="group/btn flex w-full items-center justify-center gap-2 rounded-xl border border-slate-700 bg-transparent py-3 text-sm font-semibold text-slate-300 shadow-lg transition-all duration-200 hover:bg-slate-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+              className="group/btn flex w-full items-center justify-center gap-2 rounded-ff-md border border-ff-border bg-ff-surface hover:bg-ff-surface-subtle py-3 text-sm font-semibold text-ff-foreground-secondary shadow-ff-sm transition-all duration-[180ms] hover:text-ff-foreground disabled:cursor-not-allowed disabled:opacity-40"
             >
               {processing ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -1232,8 +1239,8 @@ export default function BiometricStudio({ config, mode }: BiometricStudioProps) 
               <span className="text-[11px] font-normal opacity-60">4×6</span>
             </button>
           </div>
-        </div>
 
+        </div>
       </div>
     </div>
   );

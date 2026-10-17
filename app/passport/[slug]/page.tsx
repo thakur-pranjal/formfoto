@@ -39,23 +39,25 @@ export default async function PassportSpokePage({ params }: PageProps) {
     }
 
     return (
-        <main className="min-h-screen bg-slate-950 text-white py-12 px-4 sm:px-6 lg:px-8">
+        <main className="min-h-screen bg-ff-background text-ff-foreground pb-ff-12 px-4 sm:px-6 lg:px-8 pt-8">
             <div className="max-w-6xl mx-auto space-y-6">
-                <div className="border-b border-slate-800 pb-6">
-                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-400">
+                {/* ── Breadcrumb / header ── */}
+                <div className="border-b border-ff-border pb-6">
+                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-brand-600">
                         <span>{config.country ?? config.title}</span>
                         <span>•</span>
                         <span>Passport Photo</span>
                     </div>
-                    <h1 className="text-3xl font-bold tracking-tight mt-1 text-slate-100">
+                    <h1 className="text-3xl font-bold tracking-tight mt-1 text-ff-foreground">
                         {config.title}
                     </h1>
-                    <p className="text-sm text-slate-400 mt-1">
+                    <p className="text-sm text-ff-foreground-muted mt-1">
                         Official Size: {config.physical.widthMm} × {config.physical.heightMm} mm ({config.physical.targetDpi} DPI) | Verified via {config.sourceVerification.authority}
                     </p>
                 </div>
 
-                <div className="bg-slate-900/70 border border-slate-800 backdrop-blur-md rounded-2xl p-6 shadow-xl">
+                {/* ── Studio wrapper ── */}
+                <div className="bg-ff-surface border border-ff-border rounded-ff-xl shadow-ff-sm p-6">
                     <BiometricStudio mode="passport" config={config} />
                 </div>
             </div>

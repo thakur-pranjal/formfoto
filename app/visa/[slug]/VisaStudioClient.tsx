@@ -30,17 +30,17 @@ function ProfileTabs({
   if (profiles.length <= 1) return null;
 
   return (
-    <div className="flex items-center gap-1 rounded-full border border-slate-700/60 bg-slate-900/80 p-1 backdrop-blur-sm">
+    <div className="flex items-center gap-1 rounded-ff-pill border border-ff-border bg-ff-surface-subtle p-1">
       {profiles.map((p) => {
         const isActive = p.id === activeId;
         return (
           <button
             key={p.id}
             onClick={() => onSelect(p.id)}
-            className={`rounded-full px-4 py-2 text-xs font-semibold transition-all duration-200 ${
+            className={`rounded-ff-pill px-4 py-2 text-xs font-semibold transition-all duration-[180ms] ${
               isActive
-                ? "bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm"
-                : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent"
+                ? "bg-ff-surface text-brand-600 border border-ff-border shadow-ff-sm"
+                : "text-ff-foreground-muted hover:text-ff-foreground hover:bg-ff-surface border border-transparent"
             }`}
           >
             {p.title}
@@ -77,41 +77,41 @@ function SubclassSelector({
     <div className="relative">
       <button
         onClick={() => setIsOpen((v) => !v)}
-        className="flex w-full items-center justify-between gap-2 rounded-xl border border-slate-700/60 bg-slate-900/60 px-4 py-3 text-left backdrop-blur-sm transition hover:border-amber-500/40 hover:bg-slate-800/60"
+        className="flex w-full items-center justify-between gap-2 rounded-ff-lg border border-ff-border bg-ff-surface px-4 py-3 text-left transition-all duration-[180ms] hover:border-brand-500 hover:bg-ff-surface-subtle"
       >
         <div className="min-w-0 flex-1">
-          <span className="block text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+          <span className="block text-[10px] font-semibold uppercase tracking-widest text-ff-foreground-muted">
             Visa Subclass
           </span>
-          <span className="block truncate text-sm font-medium text-white">
+          <span className="block truncate text-sm font-medium text-ff-foreground">
             {selected ?? "All categories"}
           </span>
         </div>
         <ChevronDown
-          className={`h-4 w-4 shrink-0 text-slate-500 transition-transform ${
+          className={`h-4 w-4 shrink-0 text-ff-foreground-muted transition-transform ${
             isOpen ? "rotate-180" : ""
           }`}
         />
       </button>
 
       {isOpen && (
-        <div className="absolute z-30 mt-2 w-full overflow-hidden rounded-xl border border-slate-700/60 bg-slate-900 shadow-2xl shadow-black/40 backdrop-blur-xl">
+        <div className="absolute z-30 mt-2 w-full overflow-hidden rounded-ff-lg border border-ff-border bg-ff-surface shadow-ff-lg">
           {/* Search */}
-          <div className="border-b border-slate-800 p-2">
+          <div className="border-b border-ff-border p-2">
             <div className="relative flex items-center">
-              <Search className="pointer-events-none absolute left-3 h-3.5 w-3.5 text-slate-500" />
+              <Search className="pointer-events-none absolute left-3 h-3.5 w-3.5 text-ff-foreground-muted" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search subclass…"
-                className="w-full rounded-lg bg-slate-800/70 py-2 pl-9 pr-8 text-xs text-white placeholder-slate-500 outline-none transition focus:ring-1 focus:ring-amber-500/40"
+                className="w-full rounded-ff-md border border-ff-border bg-ff-surface-subtle py-2 pl-9 pr-8 text-xs text-ff-foreground placeholder-ff-foreground-muted outline-none transition focus:border-brand-500 focus:ring-1 focus:ring-brand-500/30"
                 autoFocus
               />
               {search && (
                 <button
                   onClick={() => setSearch("")}
-                  className="absolute right-2.5 text-slate-500 hover:text-white"
+                  className="absolute right-2.5 text-ff-foreground-muted hover:text-ff-foreground"
                 >
                   <X className="h-3 w-3" />
                 </button>
@@ -128,10 +128,10 @@ function SubclassSelector({
                 setIsOpen(false);
                 setSearch("");
               }}
-              className={`flex w-full items-center gap-2 px-4 py-2 text-left text-xs transition hover:bg-slate-800/60 ${
+              className={`flex w-full items-center gap-2 px-4 py-2 text-left text-xs transition hover:bg-ff-surface-subtle ${
                 selected === null
-                  ? "font-semibold text-amber-300"
-                  : "text-slate-400"
+                  ? "font-semibold text-brand-600"
+                  : "text-ff-foreground-muted"
               }`}
             >
               All categories
@@ -145,10 +145,10 @@ function SubclassSelector({
                   setIsOpen(false);
                   setSearch("");
                 }}
-                className={`flex w-full items-center gap-2 px-4 py-2 text-left text-xs transition hover:bg-slate-800/60 ${
+                className={`flex w-full items-center gap-2 px-4 py-2 text-left text-xs transition hover:bg-ff-surface-subtle ${
                   selected === cat
-                    ? "font-semibold text-amber-300"
-                    : "text-slate-400"
+                    ? "font-semibold text-brand-600"
+                    : "text-ff-foreground-muted"
                 }`}
               >
                 {cat}
@@ -156,7 +156,7 @@ function SubclassSelector({
             ))}
 
             {filtered.length === 0 && (
-              <p className="px-4 py-3 text-center text-xs text-slate-600">
+              <p className="px-4 py-3 text-center text-xs text-ff-foreground-muted">
                 No matching subclass
               </p>
             )}
@@ -194,21 +194,21 @@ export default function VisaStudioClient({
   const categories = activeProfile.applicableCategories ?? [];
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white py-12 px-4 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-ff-background text-ff-foreground pb-ff-12 px-4 sm:px-6 lg:px-8 pt-8">
       <div className="max-w-6xl mx-auto space-y-6">
 
         {/* ── Header ────────────────────────────────────────── */}
-        <div className="border-b border-slate-800 pb-6 space-y-4">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-amber-400">
+        <div className="border-b border-ff-border pb-6 space-y-4">
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-brand-600">
             <span>{countryFlag(country.countryCode)}</span>
             <span>{country.country}</span>
             <span>•</span>
             <span>Visa Photo</span>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-100">
+          <h1 className="text-3xl font-bold tracking-tight text-ff-foreground">
             {activeProfile.title}
           </h1>
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-ff-foreground-muted">
             Official Size: {activeProfile.physical.widthMm} ×{" "}
             {activeProfile.physical.heightMm} mm (
             {activeProfile.physical.targetDpi} DPI) | Verified via{" "}
@@ -233,7 +233,7 @@ export default function VisaStudioClient({
             </div>
 
             {selectedSubclass && (
-              <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-xs font-semibold text-amber-300 backdrop-blur-sm">
+              <div className="inline-flex items-center gap-2 rounded-ff-pill border border-brand-200 bg-brand-50 px-4 py-2 text-xs font-semibold text-brand-700">
                 <Shield className="h-3.5 w-3.5" />
                 Calibrated for: {selectedSubclass}
               </div>
@@ -242,7 +242,7 @@ export default function VisaStudioClient({
         </div>
 
         {/* ── BiometricStudio ──────────────────────────────── */}
-        <div className="bg-slate-900/70 border border-slate-800 backdrop-blur-md rounded-2xl p-6 shadow-xl">
+        <div className="bg-ff-surface border border-ff-border rounded-ff-xl shadow-ff-sm p-6">
           <BiometricStudio
             key={activeProfile.id}
             mode="visa"
