@@ -47,11 +47,11 @@ const BG_REMOVAL_STEPS = [
 
 // Background color swatches for live canvas preview
 const BG_COLOR_SWATCHES = [
-  { label: "White",       value: "#ffffff",  tw: "bg-white border-slate-300" },
-  { label: "Light gray",  value: "#f1f5f9",  tw: "bg-slate-100 border-slate-300" },
-  { label: "Black",       value: "#000000",  tw: "bg-black border-slate-600" },
-  { label: "Navy",        value: "#0f172a",  tw: "bg-slate-900 border-slate-600" },
-  { label: "Transparent", value: "transparent", tw: "border-slate-600" },
+  { label: "White",       value: "#ffffff",  tw: "bg-white border-ff-border" },
+  { label: "Light gray",  value: "#f1f5f9",  tw: "bg-[#f1f5f9] border-ff-border" },
+  { label: "Black",       value: "#000000",  tw: "bg-black border-ff-border-strong" },
+  { label: "Navy",        value: "#0f172a",  tw: "bg-[#0f172a] border-ff-border-strong" },
+  { label: "Transparent", value: "transparent", tw: "border-ff-border-strong" },
 ];
 
 const loadImageElement = (input: string | Blob): Promise<HTMLImageElement> =>
@@ -173,7 +173,7 @@ const AIProcessingOverlay = ({ stepText }: { stepText: string }) => (
     </div>
     <div className="relative flex items-center justify-center">
       <div
-        className="h-16 w-16 rounded-full bg-gradient-to-tr from-blue-500 via-purple-500 to-pink-500 shadow-[0_0_40px_rgba(168,85,247,0.6)] animate-pulse"
+        className="h-16 w-16 rounded-full bg-gradient-to-tr from-brand-500 via-brand-400 to-brand-300 shadow-[0_0_40px_rgba(49,92,234,0.5)] animate-pulse"
         style={{ animationDuration: "2.4s" }}
       />
     </div>
@@ -557,7 +557,7 @@ export default function ManualEditor({ presetConfig }: { presetConfig?: PresetCo
         {!imageSrc ? (
           <div
             {...getRootProps()}
-            className={`group flex min-h-[420px] flex-1 cursor-pointer flex-col items-center justify-center gap-5 p-10 text-center transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${
+            className={`group flex min-h-[420px] flex-1 cursor-pointer flex-col items-center justify-center gap-5 p-10 text-center transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 bg-[radial-gradient(#ffffff14_1px,transparent_1px)] [background-size:16px_16px] ${
               isDragActive ? "bg-brand-500/10" : "hover:bg-white/[0.02]"
             }`}
           >
@@ -598,7 +598,7 @@ export default function ManualEditor({ presetConfig }: { presetConfig?: PresetCo
           </div>
         ) : (
           /* ── Canvas with ReactCrop ── */
-          <div className="relative w-full flex-1 min-h-[420px]">
+          <div className="relative w-full flex-1 min-h-[420px] bg-[radial-gradient(#ffffff14_1px,transparent_1px)] [background-size:16px_16px]">
             <div
               className="w-full h-full min-h-[420px] transition-colors duration-300"
               style={{

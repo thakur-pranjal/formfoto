@@ -972,15 +972,11 @@ export default function BiometricStudio({ config, mode }: BiometricStudioProps) 
           {!imageSrc && (
             <div
               {...getRootProps()}
-              className={`group flex min-h-[420px] cursor-pointer items-center justify-center rounded-ff-lg border-2 border-dashed p-10 transition-all duration-[180ms] focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${
+              className={`group flex min-h-[420px] cursor-pointer items-center justify-center rounded-ff-lg border-2 border-dashed p-10 transition-all duration-[180ms] focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 bg-[radial-gradient(#ffffff14_1px,transparent_1px)] [background-size:16px_16px] ${
                 isDragActive
                   ? "border-brand-400 bg-ff-canvas/80 text-white"
                   : "border-ff-border-strong bg-ff-canvas hover:border-brand-400 hover:bg-ff-canvas"
               }`}
-              style={{
-                backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px)",
-                backgroundSize: "16px 16px",
-              }}
             >
               <input {...getInputProps()} />
               <div className="space-y-4 text-center">
@@ -1009,10 +1005,8 @@ export default function BiometricStudio({ config, mode }: BiometricStudioProps) 
               >
                 {/* Canvas area */}
                 <div
-                  className="relative flex items-center justify-center"
+                  className="relative flex items-center justify-center bg-[radial-gradient(#ffffff14_1px,transparent_1px)] [background-size:16px_16px]"
                   style={{
-                    backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.025) 1px, transparent 1px)",
-                    backgroundSize: "16px 16px",
                     minHeight: "400px",
                   }}
                 >

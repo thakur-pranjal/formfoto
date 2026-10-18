@@ -171,7 +171,7 @@ const AIProcessingOverlay = ({ loadingText }: { loadingText: string }) => (
     </div>
     <div className="relative flex items-center justify-center">
       <div
-        className="h-16 w-16 rounded-full bg-gradient-to-tr from-blue-500 via-purple-500 to-pink-500 shadow-[0_0_40px_rgba(168,85,247,0.6)] animate-pulse"
+        className="h-16 w-16 rounded-full bg-gradient-to-tr from-brand-500 via-brand-400 to-brand-300 shadow-[0_0_40px_rgba(49,92,234,0.5)] animate-pulse"
         style={{ animationDuration: "2.4s" }}
       />
     </div>
@@ -649,7 +649,7 @@ export default function SmartEditor({ config }: SmartEditorProps) {
                 {...getRootProps()}
                 role="button"
                 tabIndex={0}
-                className={`group relative flex min-h-[420px] flex-1 cursor-pointer flex-col items-center justify-center gap-5 p-10 text-center transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${
+                className={`group relative flex min-h-[420px] flex-1 cursor-pointer flex-col items-center justify-center gap-5 p-10 text-center transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 bg-[radial-gradient(#ffffff14_1px,transparent_1px)] [background-size:16px_16px] ${
                   isDragActive
                     ? "bg-brand-500/10"
                     : "hover:bg-white/[0.02]"
@@ -709,7 +709,7 @@ export default function SmartEditor({ config }: SmartEditorProps) {
             /* ── Post-upload: dark optical stage ── */
             <div className="bg-ff-canvas border border-ff-border-strong rounded-ff-lg overflow-hidden shadow-[inset_0_2px_8px_rgba(0,0,0,0.4)] flex flex-col">
               {/* Canvas workspace */}
-              <div className="relative w-full overflow-hidden flex-1 min-h-[500px]">
+              <div className="relative w-full overflow-hidden flex-1 min-h-[500px] bg-[radial-gradient(#ffffff14_1px,transparent_1px)] [background-size:16px_16px]">
                 {/* Inner layer: dynamic bgColor fill (preserves transparency preview) */}
                 <div
                   className="w-full h-full min-h-[500px] flex items-center justify-center overflow-hidden transition-colors duration-300"
