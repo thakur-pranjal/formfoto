@@ -548,235 +548,59 @@ export default function ManualEditor({ presetConfig }: { presetConfig?: PresetCo
   // ---------------------------------------------------------------------------
 
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-6 rounded-3xl border border-slate-700 bg-slate-800/50 p-4 shadow-2xl shadow-black/40 backdrop-blur-xl sm:p-8">
+    <div className="w-full max-w-5xl mx-auto grid grid-cols-1 gap-6 lg:grid-cols-[1fr_380px]">
 
-      {/* ── Header ── */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="space-y-1">
-          <h2 className="text-xl font-semibold text-white">Manual Editor</h2>
-          <p className="text-sm text-slate-400">
-            Set exact dimensions and target file size, then crop and process.
-          </p>
-        </div>
-        <div className="flex items-center gap-2 text-slate-300">
-          <ImageIcon className="h-5 w-5 text-cyan-300" />
-          <span className="text-sm font-medium text-white">
-            Custom ({targetWidth}&times;{targetHeight}px · {targetKb}&nbsp;KB)
-          </span>
-        </div>
-      </div>
+      {/* ── LEFT COLUMN — Dark Optical Stage ── */}
+      <div className="flex flex-col gap-0 bg-ff-canvas border border-ff-border-strong rounded-ff-lg overflow-hidden shadow-[inset_0_2px_8px_rgba(0,0,0,0.4)]">
 
-      {/* ── Output Format Toggle ── */}
-      <div className="flex flex-wrap items-center gap-4">
-        <div className="flex items-center gap-3">
-          <span className="text-xs font-medium text-slate-300 uppercase tracking-wider">Format</span>
-          <div className="flex overflow-hidden rounded-lg border border-slate-600">
-            <button
-              type="button"
-              onClick={() => setOutputFormat("image/jpeg")}
-              className={`px-4 py-1.5 text-sm font-medium transition-colors ${
-                outputFormat === "image/jpeg"
-                  ? "bg-blue-600 text-white"
-                  : "bg-slate-900/70 text-slate-400 hover:text-slate-200"
-              }`}
-            >
-              JPG
-            </button>
-            <button
-              type="button"
-              onClick={() => setOutputFormat("image/png")}
-              className={`px-4 py-1.5 text-sm font-medium transition-colors ${
-                outputFormat === "image/png"
-                  ? "bg-blue-600 text-white"
-                  : "bg-slate-900/70 text-slate-400 hover:text-slate-200"
-              }`}
-            >
-              PNG
-            </button>
-          </div>
-        </div>
-
-        {/* ── Background Color Picker ── */}
-        <div className="flex items-center gap-2.5">
-          <Palette className="h-3.5 w-3.5 text-slate-400" />
-          <span className="text-xs font-medium text-slate-300 uppercase tracking-wider">BG Color</span>
-          <div className="flex items-center gap-1.5">
-            {BG_COLOR_SWATCHES.map((swatch) => (
-              <button
-                key={swatch.value}
-                type="button"
-                title={swatch.label}
-                onClick={() => setSelectedBackgroundColor(swatch.value)}
-                className={`h-6 w-6 rounded-full border-2 transition-all hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-400 ${
-                  swatch.tw
-                } ${
-                  selectedBackgroundColor === swatch.value
-                    ? "ring-2 ring-blue-400 ring-offset-1 ring-offset-slate-800 scale-110"
-                    : ""
-                } ${
-                  swatch.value === "transparent"
-                    ? "bg-[conic-gradient(#cbd5e1_25%,#fff_0_50%,#cbd5e1_0_75%,#fff_0)] bg-[length:8px_8px]"
-                    : ""
-                }`}
-                style={swatch.value !== "transparent" ? { backgroundColor: swatch.value } : {}}
-              />
-            ))}
-            {/* Free-pick color input */}
-            <label title="Custom color" className="relative h-6 w-6 rounded-full border-2 border-dashed border-slate-500 overflow-hidden hover:scale-110 transition-transform cursor-pointer">
-              <input
-                type="color"
-                className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-                value={selectedBackgroundColor === "transparent" ? "#ffffff" : selectedBackgroundColor}
-                onChange={(e) => setSelectedBackgroundColor(e.target.value)}
-              />
-              <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-slate-400">+</span>
-            </label>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Dimension & size controls ── */}
-      {presetConfig && (
-        <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-400">
-            🔒 Preset Locked — {presetConfig.width}×{presetConfig.height}px · {presetConfig.maxKb}KB max
-          </span>
-        </div>
-      )}
-      <div className="grid grid-cols-3 gap-3">
-        {/* Width */}
-        <div className="flex flex-col gap-1.5">
-          <label
-            htmlFor="manual-width"
-            className="text-xs font-medium text-slate-300 uppercase tracking-wider"
-          >
-            Width (px)
-          </label>
-          <input
-            id="manual-width"
-            type="number"
-            min={1}
-            value={targetWidth}
-            disabled={!!presetConfig}
-            onChange={(e) =>
-              setTargetWidth(Math.max(1, Math.floor(Number(e.target.value))))
-            }
-            className={`bg-slate-900/70 border rounded-xl px-3 py-2.5 text-sm transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
-              presetConfig
-                ? "border-emerald-700/50 text-emerald-300 cursor-not-allowed opacity-70"
-                : "border-slate-600 hover:border-blue-500 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            }`}
-          />
-        </div>
-
-        {/* Height */}
-        <div className="flex flex-col gap-1.5">
-          <label
-            htmlFor="manual-height"
-            className="text-xs font-medium text-slate-300 uppercase tracking-wider"
-          >
-            Height (px)
-          </label>
-          <input
-            id="manual-height"
-            type="number"
-            min={1}
-            value={targetHeight}
-            disabled={!!presetConfig}
-            onChange={(e) =>
-              setTargetHeight(Math.max(1, Math.floor(Number(e.target.value))))
-            }
-            className={`bg-slate-900/70 border rounded-xl px-3 py-2.5 text-sm transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
-              presetConfig
-                ? "border-emerald-700/50 text-emerald-300 cursor-not-allowed opacity-70"
-                : "border-slate-600 hover:border-blue-500 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            }`}
-          />
-        </div>
-
-        {/* Max KB */}
-        <div className="flex flex-col gap-1.5">
-          <label
-            htmlFor="manual-kb"
-            className={`text-xs font-medium uppercase tracking-wider ${
-              outputFormat === "image/png" || presetConfig ? "text-slate-500" : "text-slate-300"
+        {/* Dropzone (replaced by canvas once imageSrc is set) */}
+        {!imageSrc ? (
+          <div
+            {...getRootProps()}
+            className={`group flex min-h-[420px] flex-1 cursor-pointer flex-col items-center justify-center gap-5 p-10 text-center transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${
+              isDragActive ? "bg-brand-500/10" : "hover:bg-white/[0.02]"
             }`}
           >
-            Max File Size (KB)
-          </label>
-          <input
-            id="manual-kb"
-            type="number"
-            min={1}
-            value={targetKb}
-            disabled={outputFormat === "image/png" || !!presetConfig}
-            onChange={(e) =>
-              setTargetKb(Math.max(1, Math.floor(Number(e.target.value))))
-            }
-            className={`bg-slate-900/70 border rounded-xl px-3 py-2.5 text-sm transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
-              presetConfig
-                ? "border-emerald-700/50 text-emerald-300 cursor-not-allowed opacity-70"
-                : outputFormat === "image/png"
-                ? "border-slate-700 text-slate-600 cursor-not-allowed opacity-50"
-                : "border-slate-600 hover:border-blue-500 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            }`}
-          />
-          {outputFormat === "image/png" && !presetConfig && (
-            <p className="text-xs text-amber-400/80 leading-tight">
-              PNGs are lossless (file size cannot be compressed)
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* Aspect ratio info pill */}
-      <div className="flex items-center gap-2">
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-900/60 px-3 py-1 text-xs text-slate-400">
-          <span className="text-slate-500">Aspect ratio</span>
-          <span className="font-semibold text-slate-200">
-            {Number.isFinite(aspectRatio) ? aspectRatio.toFixed(3) : "N/A"}
-          </span>
-          <span className="mx-1 text-slate-700">·</span>
-          <span className="text-slate-500">Output</span>
-          <span className="font-semibold text-slate-200">
-            {targetWidth}&times;{targetHeight}
-          </span>
-        </span>
-      </div>
-
-      {/* ── Dropzone ── */}
-      <div
-        {...getRootProps()}
-        className={`group flex min-h-[160px] cursor-pointer items-center justify-center rounded-2xl border-2 border-dashed border-slate-600/70 bg-slate-900/30 p-6 text-white transition hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900 ${
-          isDragActive ? "border-blue-500 bg-slate-900/50" : ""
-        }`}
-      >
-        <input {...getInputProps()} />
-        <div className="space-y-2 text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-500/10 text-blue-300 shadow-inner shadow-blue-500/30">
-            <Upload className="h-6 w-6 animate-pulse" />
-          </div>
-          <div className="text-sm text-slate-200">
-            {isDragActive
-              ? "Drop the image here"
-              : "Drag & drop an image, or click to select"}
-          </div>
-          <p className="text-xs text-slate-400">
-            Supported formats: JPG, PNG. Max file recommended &lt; 5 MB.
-          </p>
-        </div>
-      </div>
-
-      {/* ── Image editor ── */}
-      {imageSrc && (
-        <div className="space-y-4">
-
-          {/* ReactCrop canvas — two-layer structure:
-               outer: dark presentation card (no style, no padding)
-               inner: dynamic background color/pattern (inline style preserved) */}
-          <div className="relative w-full overflow-hidden rounded-2xl border border-white/8 bg-[#0f172a] shadow-2xl">
+            <input {...getInputProps()} />
+            {isDragActive && (
+              <div className="pointer-events-none absolute inset-0 ring-2 ring-inset ring-brand-400/40" />
+            )}
             <div
-              className="w-full transition-colors duration-300"
+              className={`flex h-24 w-24 items-center justify-center rounded-full border transition-all duration-300 ${
+                isDragActive
+                  ? "border-brand-400/40 bg-brand-500/20 shadow-[0_0_40px_rgba(49,92,234,0.35)]"
+                  : "border-white/10 bg-white/5 shadow-inner group-hover:border-brand-500/40 group-hover:bg-white/10"
+              }`}
+            >
+              <Upload
+                className={`h-10 w-10 transition-all duration-300 ${
+                  isDragActive
+                    ? "text-brand-300 scale-110"
+                    : "text-white/30 group-hover:text-brand-400"
+                }`}
+              />
+            </div>
+            <div className="max-w-sm space-y-2">
+              <p className="text-lg font-semibold text-white">
+                {isDragActive ? "Release to begin processing" : "Drop your image here"}
+              </p>
+              <p className="text-sm leading-relaxed text-white/50">
+                {isDragActive
+                  ? "Engine ready — crop will be applied instantly."
+                  : "Drag & drop or click to select. JPG, PNG · Max 5 MB recommended."}
+              </p>
+            </div>
+            {!isDragActive && (
+              <span className="rounded-ff-md border border-white/10 bg-white/5 px-4 py-2 text-xs font-medium text-white/40 transition group-hover:border-brand-500/40 group-hover:text-brand-300">
+                Or click to browse files
+              </span>
+            )}
+          </div>
+        ) : (
+          /* ── Canvas with ReactCrop ── */
+          <div className="relative w-full flex-1 min-h-[420px]">
+            <div
+              className="w-full h-full min-h-[420px] transition-colors duration-300"
               style={{
                 backgroundColor:
                   selectedBackgroundColor === "transparent"
@@ -808,76 +632,279 @@ export default function ManualEditor({ presetConfig }: { presetConfig?: PresetCo
               </ReactCrop>
               {isRemovingBg && <AIProcessingOverlay stepText={bgRemovalStep} />}
             </div>
+
+            {/* Re-upload overlay button */}
+            <div
+              {...getRootProps()}
+              className="absolute top-3 right-3 flex cursor-pointer items-center gap-1.5 rounded-ff-sm border border-white/10 bg-ff-canvas/80 px-2 py-1 text-[11px] text-white/40 backdrop-blur-sm transition hover:border-brand-500/40 hover:text-brand-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+            >
+              <input {...getInputProps()} />
+              <Upload className="h-3 w-3" />
+              Replace
+            </div>
           </div>
+        )}
 
-          {/* Action row */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex w-full flex-col gap-2 sm:w-auto">
+        {/* Live Telemetry ticker bar */}
+        <div className="bg-ff-canvas-surface border-t border-ff-border-strong/50 px-ff-4 py-ff-2 text-center font-mono text-[11px] tracking-wider text-ff-foreground-muted uppercase">
+          {targetWidth}&thinsp;&times;&thinsp;{targetHeight}&thinsp;px
+          &nbsp;&middot;&nbsp;
+          {outputFormat === "image/png" ? "PNG · Lossless" : `JPEG · Max ${targetKb} KB`}
+        </div>
+      </div>
 
-              {/* Remove Background */}
-              <button
-                type="button"
-                onClick={handleRemoveBackground}
-                disabled={!imageSrc || isRemovingBg}
-                className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-2.5 text-white shadow-lg shadow-purple-500/20 transition hover:from-indigo-500 hover:to-purple-500 disabled:cursor-not-allowed disabled:from-slate-600 disabled:to-slate-600 disabled:opacity-50"
-              >
-                {removeBgStage !== "idle" && (
-                  <span className="h-5 w-5 rounded-full border-2 border-transparent border-r-white border-t-white animate-spin" />
-                )}
-                {removeBgStage === "optimizing"
-                  ? "Optimizing..."
-                  : removeBgStage === "removing"
-                  ? "Removing BG..."
-                  : "✨ Remove Background"}
-              </button>
+      {/* ── RIGHT COLUMN — Configuration Inspector ── */}
+      <aside className="bg-ff-surface border border-ff-border rounded-ff-lg shadow-ff-sm p-ff-6 flex flex-col gap-ff-6">
 
-              {/* Process */}
-              <button
-                type="button"
-                onClick={generateCroppedImage}
-                disabled={!completedCrop || processing}
-                className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 px-5 py-2.5 text-white shadow-lg shadow-blue-500/20 transition hover:from-blue-500 hover:to-blue-400 disabled:cursor-not-allowed disabled:from-slate-600 disabled:to-slate-600 disabled:opacity-50"
-              >
-                {processing ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Download className="h-4 w-4" />
-                )}
-                {processing ? "Processing..." : "Process"}
-              </button>
+        {/* Panel header */}
+        <div>
+          <p className="text-[11px] font-mono uppercase tracking-widest text-ff-foreground-muted mb-1">Configuration</p>
+          <div className="flex items-center gap-2">
+            <ImageIcon className="h-4 w-4 text-brand-500" />
+            <span className="text-sm font-semibold text-ff-foreground">
+              {targetWidth}&times;{targetHeight}px &middot; {targetKb}&nbsp;KB
+            </span>
+          </div>
+        </div>
+
+        {/* Preset lock banner */}
+        {presetConfig && (
+          <div className="inline-flex items-center gap-1.5 rounded-ff-md border border-ff-success/40 bg-ff-success-light px-3 py-2 text-xs font-semibold text-ff-success-dark">
+            🔒 Preset Locked — {presetConfig.width}&times;{presetConfig.height}px &middot; {presetConfig.maxKb} KB max
+          </div>
+        )}
+
+        {/* Output Format toggle (segmented control) */}
+        <div>
+          <p className="text-[11px] font-mono uppercase text-ff-foreground-muted mb-ff-2">Format</p>
+          <div className="bg-ff-surface-subtle p-1 rounded-ff-lg inline-flex gap-1">
+            <button
+              type="button"
+              onClick={() => setOutputFormat("image/jpeg")}
+              className={`px-4 py-1.5 text-sm font-semibold select-none transition-all duration-[180ms] focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${
+                outputFormat === "image/jpeg"
+                  ? "bg-ff-surface shadow-ff-sm text-brand-600 rounded-ff-md"
+                  : "text-ff-foreground-muted hover:text-ff-foreground rounded-ff-md"
+              }`}
+            >
+              JPG
+            </button>
+            <button
+              type="button"
+              onClick={() => setOutputFormat("image/png")}
+              className={`px-4 py-1.5 text-sm font-semibold select-none transition-all duration-[180ms] focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${
+                outputFormat === "image/png"
+                  ? "bg-ff-surface shadow-ff-sm text-brand-600 rounded-ff-md"
+                  : "text-ff-foreground-muted hover:text-ff-foreground rounded-ff-md"
+              }`}
+            >
+              PNG
+            </button>
+          </div>
+        </div>
+
+        {/* Dimension & size inputs */}
+        <div>
+          <p className="text-[11px] font-mono uppercase text-ff-foreground-muted mb-ff-3">Target Dimensions</p>
+          <div className="grid grid-cols-3 gap-3">
+            {/* Width */}
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="manual-width" className="text-[11px] font-mono uppercase text-ff-foreground-muted">
+                Width (px)
+              </label>
+              <input
+                id="manual-width"
+                type="number"
+                min={1}
+                value={targetWidth}
+                disabled={!!presetConfig}
+                onChange={(e) => setTargetWidth(Math.max(1, Math.floor(Number(e.target.value))))}
+                className={`bg-ff-background border rounded-ff-md px-3 py-2 text-sm text-ff-foreground transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:outline-none ${
+                  presetConfig
+                    ? "border-ff-success/40 text-ff-success-dark cursor-not-allowed opacity-70"
+                    : "border-ff-border hover:border-ff-border-strong focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                }`}
+              />
             </div>
 
-            {/* Live size estimate badge */}
-            <div className="flex flex-col items-end gap-1">
-              <span className="text-xs text-slate-500 uppercase tracking-wider">
-                Estimated output
-              </span>
-              {estimateCapped ? (
-                <>
-                  <span className="text-lg font-bold text-amber-400">
-                    {estimatedFileSize}
-                  </span>
-                  <span className="text-xs font-semibold text-amber-500">
-                    Max Quality Reached
-                  </span>
-                </>
-              ) : (
-                <span className="text-lg font-bold text-blue-400">
-                  {estimatedFileSize}
-                </span>
+            {/* Height */}
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="manual-height" className="text-[11px] font-mono uppercase text-ff-foreground-muted">
+                Height (px)
+              </label>
+              <input
+                id="manual-height"
+                type="number"
+                min={1}
+                value={targetHeight}
+                disabled={!!presetConfig}
+                onChange={(e) => setTargetHeight(Math.max(1, Math.floor(Number(e.target.value))))}
+                className={`bg-ff-background border rounded-ff-md px-3 py-2 text-sm text-ff-foreground transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:outline-none ${
+                  presetConfig
+                    ? "border-ff-success/40 text-ff-success-dark cursor-not-allowed opacity-70"
+                    : "border-ff-border hover:border-ff-border-strong focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                }`}
+              />
+            </div>
+
+            {/* Max KB */}
+            <div className="flex flex-col gap-1.5">
+              <label
+                htmlFor="manual-kb"
+                className={`text-[11px] font-mono uppercase ${
+                  outputFormat === "image/png" || presetConfig
+                    ? "text-ff-foreground-muted/50"
+                    : "text-ff-foreground-muted"
+                }`}
+              >
+                Max KB
+              </label>
+              <input
+                id="manual-kb"
+                type="number"
+                min={1}
+                value={targetKb}
+                disabled={outputFormat === "image/png" || !!presetConfig}
+                onChange={(e) => setTargetKb(Math.max(1, Math.floor(Number(e.target.value))))}
+                className={`bg-ff-background border rounded-ff-md px-3 py-2 text-sm text-ff-foreground transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:outline-none ${
+                  presetConfig
+                    ? "border-ff-success/40 text-ff-success-dark cursor-not-allowed opacity-70"
+                    : outputFormat === "image/png"
+                    ? "border-ff-border text-ff-foreground-muted cursor-not-allowed opacity-50"
+                    : "border-ff-border hover:border-ff-border-strong focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                }`}
+              />
+              {outputFormat === "image/png" && !presetConfig && (
+                <p className="text-[11px] text-ff-warning leading-tight">PNGs are lossless</p>
               )}
-              <span className="text-xs text-slate-400">
-                Target: {targetKb}&nbsp;KB · {targetWidth}&times;{targetHeight}px
-              </span>
             </div>
           </div>
+
+          {/* Aspect ratio info pill */}
+          <div className="mt-ff-3 flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-ff-md border border-ff-border bg-ff-surface-subtle px-3 py-1 text-xs text-ff-foreground-muted">
+              <span className="text-ff-foreground-muted/60">Ratio</span>
+              <span className="font-semibold text-ff-foreground font-mono">
+                {Number.isFinite(aspectRatio) ? aspectRatio.toFixed(3) : "N/A"}
+              </span>
+              <span className="mx-1 text-ff-border-strong">&middot;</span>
+              <span className="text-ff-foreground-muted/60">Output</span>
+              <span className="font-semibold text-ff-foreground font-mono">
+                {targetWidth}&times;{targetHeight}
+              </span>
+            </span>
+          </div>
+        </div>
+
+        {/* Background Color swatches */}
+        <div>
+          <div className="flex items-center gap-2 mb-ff-3">
+            <Palette className="h-3.5 w-3.5 text-brand-500" />
+            <p className="text-[11px] font-mono uppercase text-ff-foreground-muted">Background</p>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            {BG_COLOR_SWATCHES.map((swatch) => (
+              <button
+                key={swatch.value}
+                type="button"
+                title={swatch.label}
+                onClick={() => setSelectedBackgroundColor(swatch.value)}
+                className={`h-8 w-8 rounded-full border-2 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 hover:scale-110 ${
+                  selectedBackgroundColor === swatch.value
+                    ? "border-brand-500 ring-2 ring-brand-500 ring-offset-2 ring-offset-ff-surface scale-110"
+                    : "border-ff-border hover:border-ff-border-strong"
+                } ${
+                  swatch.value === "transparent"
+                    ? "bg-[conic-gradient(#cbd5e1_25%,#fff_0_50%,#cbd5e1_0_75%,#fff_0)] bg-[length:8px_8px]"
+                    : ""
+                }`}
+                style={swatch.value !== "transparent" ? { backgroundColor: swatch.value } : {}}
+              />
+            ))}
+            {/* Free-pick color input */}
+            <label
+              title="Custom color"
+              className="relative h-8 w-8 rounded-full border-2 border-dashed border-ff-border overflow-hidden hover:scale-110 hover:border-brand-500 transition-all cursor-pointer"
+            >
+              <input
+                type="color"
+                className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                value={selectedBackgroundColor === "transparent" ? "#ffffff" : selectedBackgroundColor}
+                onChange={(e) => setSelectedBackgroundColor(e.target.value)}
+              />
+              <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-ff-foreground-muted">+</span>
+            </label>
+          </div>
+        </div>
+
+        {/* Compression gauge / live size estimate */}
+        <div className="border border-ff-border rounded-ff-md p-ff-4">
+          <p className="text-[11px] font-mono uppercase text-ff-foreground-muted mb-ff-2">Est. Output</p>
+          <div className="flex items-baseline gap-2">
+            {estimateCapped ? (
+              <>
+                <span className="font-mono text-lg font-bold text-ff-warning">{estimatedFileSize}</span>
+                <span className="text-[11px] font-semibold text-ff-warning-dark">Max Quality Reached</span>
+              </>
+            ) : (
+              <span className={`font-mono text-lg font-bold ${
+                estimatedFileSize === "—" || estimatedFileSize === "Awaiting crop..."
+                  ? "text-ff-foreground-muted"
+                  : estimatedFileSize === "Estimating..."
+                  ? "text-ff-warning animate-pulse"
+                  : "text-ff-success"
+              }`}>
+                {estimatedFileSize === "Estimating..."
+                  ? "Estimating…"
+                  : estimatedFileSize === "Awaiting crop..."
+                  ? "Awaiting crop…"
+                  : estimatedFileSize}
+              </span>
+            )}
+          </div>
+          <p className="text-[11px] font-mono text-ff-foreground-muted mt-1">
+            Target: {targetKb}&nbsp;KB &middot; {targetWidth}&times;{targetHeight}px
+          </p>
+        </div>
+
+        {/* Action buttons */}
+        <div className="flex flex-col gap-ff-3 mt-auto">
+          <button
+            type="button"
+            onClick={handleRemoveBackground}
+            disabled={!imageSrc || isRemovingBg}
+            className="inline-flex w-full cursor-pointer select-none items-center justify-center gap-2 rounded-ff-md border border-ff-border bg-ff-surface px-5 py-2.5 text-sm font-semibold text-ff-foreground shadow-ff-sm transition-all duration-[180ms] hover:border-brand-300 hover:bg-brand-50 hover:text-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {removeBgStage !== "idle" && (
+              <span className="h-4 w-4 rounded-full border-2 border-transparent border-r-brand-500 border-t-brand-500 animate-spin" />
+            )}
+            {removeBgStage === "optimizing"
+              ? "Optimizing..."
+              : removeBgStage === "removing"
+              ? "Removing BG..."
+              : "✨ Remove Background"}
+          </button>
+
+          <button
+            type="button"
+            onClick={generateCroppedImage}
+            disabled={!completedCrop || processing}
+            className="inline-flex w-full cursor-pointer select-none items-center justify-center gap-2 rounded-ff-md bg-brand-500 hover:bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-ff-sm transition-all duration-[180ms] disabled:cursor-not-allowed disabled:bg-ff-border-strong disabled:opacity-50 disabled:shadow-none"
+          >
+            {processing ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
+            {processing ? "Processing..." : "Process & Compress"}
+          </button>
 
           {/* Download link */}
           {downloadUrl && (
             <a
               href={downloadUrl}
               download={`ManualEditor_${targetWidth}x${targetHeight}.${outputFormat === "image/png" ? "png" : "jpg"}`}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-blue-500 to-blue-700 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-600/30 transition hover:shadow-[0_0_25px_rgba(59,130,246,0.65)] focus:outline-none focus:ring-2 focus:ring-blue-400 sm:w-auto"
+              className="inline-flex w-full cursor-pointer select-none items-center justify-center gap-2 rounded-ff-md bg-brand-500 hover:bg-brand-600 px-5 py-3 text-sm font-semibold text-white shadow-ff-sm transition-all duration-[180ms] focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
             >
               <Download className="h-4 w-4" />
               Download processed photo
@@ -886,13 +913,13 @@ export default function ManualEditor({ presetConfig }: { presetConfig?: PresetCo
 
           {/* Error */}
           {error && (
-            <p className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-400">
-              {error}
-            </p>
+            <div className="flex items-start gap-2 rounded-ff-md border border-ff-error/30 bg-ff-error-light px-ff-4 py-ff-3">
+              <p className="text-sm text-ff-error-dark">{error}</p>
+            </div>
           )}
         </div>
-      )}
+
+      </aside>
     </div>
   );
 }
-

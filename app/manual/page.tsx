@@ -15,37 +15,32 @@ export const metadata: Metadata = {
 
 export default function ManualPage() {
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 px-4 py-16 text-white sm:px-6 sm:py-24">
+    <main className="min-h-screen bg-ff-background text-ff-foreground pb-ff-12 px-4 pt-10 sm:px-6">
       <div className="mx-auto max-w-5xl space-y-14">
 
         {/* ── Header ── */}
         <header className="space-y-6 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-cyan-300">
+          <div className="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-brand-600">
             <span aria-hidden>⚡</span> Pro Workspace
           </div>
 
-          <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
-            <span className="bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-              Pro Workspace:
-            </span>
-            <br />
-            <span className="text-white">Manual Pixel Control</span>
+          <h1 className="text-4xl font-extrabold tracking-tight text-ff-foreground sm:text-5xl lg:text-6xl">
+            Pro Workspace:{" "}
+            <span className="text-brand-500">Manual Pixel Control</span>
           </h1>
 
-          <p className="mx-auto max-w-2xl text-base text-slate-400 sm:text-lg">
+          <p className="mx-auto max-w-2xl text-base text-ff-foreground-muted sm:text-lg">
             The{" "}
-            <span className="font-semibold text-white">
+            <span className="font-semibold text-ff-foreground">
               most powerful free photo tool
             </span>{" "}
             on the web. Set exact pixel dimensions, target any file size down to
             the kilobyte, and apply aggressive JPEG compression — all in real
             time with{" "}
-            <span className="font-semibold text-cyan-300">zero lag</span>,{" "}
-            <span className="font-semibold text-purple-300">
-              zero uploads
-            </span>
-            , and{" "}
-            <span className="font-semibold text-pink-300">
+            <span className="font-semibold text-brand-600">zero lag</span>,{" "}
+            <span className="font-semibold text-brand-500">zero uploads</span>,
+            and{" "}
+            <span className="font-semibold text-brand-600">
               zero restrictions
             </span>
             .
@@ -63,7 +58,7 @@ export default function ManualPage() {
             ].map(({ icon, label }) => (
               <span
                 key={label}
-                className="inline-flex items-center gap-1.5 rounded-full border border-slate-700/60 bg-slate-800/60 px-3 py-1 text-xs font-medium text-slate-300 backdrop-blur-sm"
+                className="inline-flex items-center gap-1.5 rounded-full border border-ff-border bg-ff-surface px-3 py-1 text-xs font-medium text-ff-foreground-muted"
               >
                 <span aria-hidden>{icon}</span>
                 {label}
@@ -72,37 +67,14 @@ export default function ManualPage() {
           </div>
         </header>
 
-        {/* ── Glassmorphism Editor Container ── */}
-        <div className="relative overflow-hidden rounded-2xl border border-slate-700/50 bg-slate-900/50 shadow-2xl backdrop-blur-sm">
-          {/* Subtle top gradient accent */}
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent"
-          />
-          {/* Ambient glow */}
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -top-32 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-[radial-gradient(circle_at_50%_0%,_rgba(59,130,246,0.15),_rgba(15,23,42,0)_60%)]"
-          />
-
-          <div className="relative p-4 sm:p-6 lg:p-8">
-            <ManualEditor />
-          </div>
-
-          {/* Subtle bottom gradient accent */}
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-purple-500/50 to-transparent"
-          />
-        </div>
+        {/* ── Editor ── */}
+        <ManualEditor />
 
         {/* ── Why Pro Workspace section ── */}
         <section className="space-y-6">
-          <h2 className="text-center text-2xl font-bold tracking-tight text-white sm:text-3xl">
+          <h2 className="text-center text-2xl font-bold tracking-tight text-ff-foreground sm:text-3xl">
             Why{" "}
-            <span className="bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
-              Pro Workspace
-            </span>{" "}
+            <span className="text-brand-500">Pro Workspace</span>{" "}
             destroys the competition
           </h2>
 
@@ -147,15 +119,15 @@ export default function ManualPage() {
             ].map(({ icon, title, description }) => (
               <div
                 key={title}
-                className="rounded-xl border border-slate-700/50 bg-slate-800/40 p-5 backdrop-blur-sm transition hover:border-slate-600/60 hover:bg-slate-800/60"
+                className="bg-ff-surface border border-ff-border rounded-ff-lg shadow-ff-sm p-5 transition hover:shadow-ff-md hover:border-ff-border-strong"
               >
                 <div className="mb-3 text-2xl" aria-hidden>
                   {icon}
                 </div>
-                <h3 className="mb-1.5 text-sm font-semibold text-white">
+                <h3 className="mb-1.5 text-sm font-semibold text-ff-foreground">
                   {title}
                 </h3>
-                <p className="text-xs leading-relaxed text-slate-400">
+                <p className="text-xs leading-relaxed text-ff-foreground-muted">
                   {description}
                 </p>
               </div>
@@ -164,7 +136,7 @@ export default function ManualPage() {
         </section>
 
         {/* ── Footer note ── */}
-        <p className="text-center text-xs text-slate-600">
+        <p className="text-center text-xs text-ff-foreground-muted">
           FormFoto Pro Workspace · All processing is local · No data is
           collected or transmitted
         </p>
