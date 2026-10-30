@@ -14,6 +14,7 @@ export const bpscConfig: FormatConfig = {
       height: 0,
       minKb: 15,
       maxKb: 25,
+      isLiveCapture: true,
     stampRequired: false,
       rules: {
         captureMethod: 'Live webcam capture is the primary requirement',

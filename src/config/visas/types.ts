@@ -6,6 +6,12 @@ export interface VisaPassportConfig {
   type: "visa" | "passport";
   channel: "digital_upload" | "physical_print" | "both";
   applicableCategories?: string[];
+  /**
+   * When true the official portal requires a live webcam capture and does not
+   * accept pre-uploaded photos. BiometricStudio replaces its upload/canvas UI
+   * with the LiveCapture instructional block when this flag is set.
+   */
+  isLiveCapture?: boolean;
   aspectRatio: number;
   physical: {
     widthMm: number;

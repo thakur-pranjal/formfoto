@@ -15,7 +15,8 @@ import ReactCrop, {
   type PercentCrop,
 } from "react-image-crop";
 import { removeBackground } from "@imgly/background-removal";
-import { Download, Upload, Image as ImageIcon, Loader2, Palette } from "lucide-react";
+import { Download, Upload, Image as ImageIcon, Loader2, Palette, CheckCircle2 } from "lucide-react";
+import { formatBytes } from "@/utils/formatBytes";
 import "react-image-crop/dist/ReactCrop.css";
 
 // ---------------------------------------------------------------------------
@@ -231,6 +232,7 @@ export default function ManualEditor({ presetConfig }: { presetConfig?: PresetCo
   const [outputFormat, setOutputFormat] = useState<"image/jpeg" | "image/png">("image/jpeg");
   // Live canvas background color for transparent-image preview
   const [selectedBackgroundColor, setSelectedBackgroundColor] = useState("#ffffff");
+  const [originalSizeBytes, setOriginalSizeBytes] = useState<number | null>(null);
 
   const imgRef = useRef<HTMLImageElement | null>(null);
 
@@ -245,6 +247,7 @@ export default function ManualEditor({ presetConfig }: { presetConfig?: PresetCo
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
     if (!file) return;
+    setOriginalSizeBytes(file.size);
     const reader = new FileReader();
     reader.onload = () => {
       setImageSrc(reader.result as string);
@@ -548,105 +551,112 @@ export default function ManualEditor({ presetConfig }: { presetConfig?: PresetCo
   // ---------------------------------------------------------------------------
 
   return (
-    <div className="w-full max-w-5xl mx-auto grid grid-cols-1 gap-6 lg:grid-cols-[1fr_380px]">
+    <div className="w-full max-w-5xl mx-auto grid grid-cols-1 gap-6 lg:grid-cols-[1fr_380px] items-start">
 
-      {/* ── LEFT COLUMN — Dark Optical Stage ── */}
-      <div className="flex flex-col gap-0 bg-ff-canvas border border-ff-border-strong rounded-ff-lg overflow-hidden shadow-[inset_0_2px_8px_rgba(0,0,0,0.4)]">
+      {/* ── LEFT COLUMN — Dark Optical Stage (h-fit, never grid-stretches) ── */}
+      <div className="relative w-full h-fit flex flex-col bg-ff-canvas border border-ff-border-strong rounded-ff-lg overflow-hidden shadow-ff-sm self-start">
 
         {/* Dropzone (replaced by canvas once imageSrc is set) */}
         {!imageSrc ? (
           <div
             {...getRootProps()}
-            className={`group flex min-h-[420px] flex-1 cursor-pointer flex-col items-center justify-center gap-5 p-10 text-center transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 bg-[radial-gradient(#ffffff14_1px,transparent_1px)] [background-size:16px_16px] ${
-              isDragActive ? "bg-brand-500/10" : "hover:bg-white/[0.02]"
+            className={`cursor-pointer [&_*]:cursor-pointer group border border-transparent flex min-h-[420px] flex-1 flex-col items-center justify-center gap-5 p-10 text-center transition-all duration-[180ms] focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 bg-[radial-gradient(#ffffff14_1px,transparent_1px)] [background-size:16px_16px] hover:border-brand-500 hover:bg-brand-500/5 hover:shadow-[0_0_30px_rgba(49,92,234,0.15)] ${
+              isDragActive ? "bg-brand-500/10" : ""
             }`}
           >
             <input {...getInputProps()} />
+
             {isDragActive && (
               <div className="pointer-events-none absolute inset-0 ring-2 ring-inset ring-brand-400/40" />
             )}
-            <div
-              className={`flex h-24 w-24 items-center justify-center rounded-full border transition-all duration-300 ${
-                isDragActive
-                  ? "border-brand-400/40 bg-brand-500/20 shadow-[0_0_40px_rgba(49,92,234,0.35)]"
-                  : "border-white/10 bg-white/5 shadow-inner group-hover:border-brand-500/40 group-hover:bg-white/10"
-              }`}
-            >
-              <Upload
-                className={`h-10 w-10 transition-all duration-300 ${
-                  isDragActive
-                    ? "text-brand-300 scale-110"
-                    : "text-white/30 group-hover:text-brand-400"
-                }`}
-              />
-            </div>
-            <div className="max-w-sm space-y-2">
-              <p className="text-lg font-semibold text-white">
+
+            {/* This wrapper ensures the cursor fix remains active */}
+            <div className="flex flex-col items-center justify-center w-full h-full pointer-events-none select-none p-6">
+              {/* 1. The Icon Wrapper (Sleek Circle) */}
+              <div className="w-16 h-16 mb-5 flex items-center justify-center rounded-full bg-white/5 border border-white/10 transition-colors duration-[180ms] group-hover:bg-brand-500/10 group-hover:border-brand-500/30">
+                <Upload className="w-8 h-8 text-slate-400 transition-all duration-[180ms] group-hover:-translate-y-1 group-hover:text-brand-400 group-hover:scale-110" />
+              </div>
+
+              {/* 2. The Headings */}
+              <h3 className="text-lg font-medium text-white mb-2">
                 {isDragActive ? "Release to begin processing" : "Drop your image here"}
-              </p>
-              <p className="text-sm leading-relaxed text-white/50">
+              </h3>
+              <p className="text-sm text-slate-400 max-w-sm mx-auto text-center leading-relaxed">
                 {isDragActive
                   ? "Engine ready — crop will be applied instantly."
                   : "Drag & drop or click to select. JPG, PNG · Max 5 MB recommended."}
               </p>
-            </div>
-            {!isDragActive && (
-              <span className="rounded-ff-md border border-white/10 bg-white/5 px-4 py-2 text-xs font-medium text-white/40 transition group-hover:border-brand-500/40 group-hover:text-brand-300">
+
+              {/* 3. The Pill Button */}
+              <div className="mt-6 inline-flex items-center justify-center px-5 py-2 rounded-lg border border-white/10 bg-white/5 text-sm font-medium text-slate-300 transition-all duration-[180ms] group-hover:bg-brand-500/20 group-hover:border-brand-500/50 group-hover:text-white shadow-sm">
                 Or click to browse files
-              </span>
-            )}
+              </div>
+            </div>
           </div>
         ) : (
-          /* ── Canvas with ReactCrop ── */
-          <div className="relative w-full flex-1 min-h-[420px] bg-[radial-gradient(#ffffff14_1px,transparent_1px)] [background-size:16px_16px]">
-            <div
-              className="w-full h-full min-h-[420px] transition-colors duration-300"
-              style={{
-                backgroundColor:
-                  selectedBackgroundColor === "transparent"
-                    ? undefined
-                    : selectedBackgroundColor,
-                backgroundImage:
-                  selectedBackgroundColor === "transparent"
-                    ? "conic-gradient(#475569 25%, #334155 0 50%, #475569 0 75%, #334155 0)"
-                    : undefined,
-                backgroundSize:
-                  selectedBackgroundColor === "transparent" ? "16px 16px" : undefined,
-              }}
-            >
-              <ReactCrop
-                crop={crop}
-                onChange={(_c, percentCrop) => setCrop(percentCrop)}
-                onComplete={(c) => setCompletedCrop(c)}
-                aspect={aspectRatio}
-                keepSelection
-                className="max-h-[70vh]"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={imageSrc}
-                  alt="Upload preview"
-                  onLoad={onImageLoad}
-                  className="max-h-[70vh] object-contain"
-                />
-              </ReactCrop>
-              {isRemovingBg && <AIProcessingOverlay stepText={bgRemovalStep} />}
-            </div>
+          /* ── Canvas Stage Area: Ambient Blur Backdrop ── */
+          <>
+            {/* AMBIENT BLUR BACKDROP */}
+            {imageSrc && (
+              <div
+                className="absolute inset-0 bg-cover bg-center blur-2xl opacity-40 scale-110 pointer-events-none"
+                style={{ backgroundImage: `url(${imageSrc})` }}
+              />
+            )}
 
-            {/* Re-upload overlay button */}
-            <div
-              {...getRootProps()}
-              className="absolute top-3 right-3 flex cursor-pointer items-center gap-1.5 rounded-ff-sm border border-white/10 bg-ff-canvas/80 px-2 py-1 text-[11px] text-white/40 backdrop-blur-sm transition hover:border-brand-500/40 hover:text-brand-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
-            >
-              <input {...getInputProps()} />
-              <Upload className="h-3 w-3" />
-              Replace
+            {/* STAGE AREA — always dark, dot-grid on top of blur */}
+            <div className="relative flex-1 w-full flex items-center justify-center p-4 sm:p-6 bg-[radial-gradient(#ffffff14_1px,transparent_1px)] [background-size:16px_16px] z-10">
+
+              {/* INNER SHRINK-WRAP CONTAINER — canvas bg-color preview applied here */}
+              <div
+                className="relative inline-flex items-center justify-center w-fit h-fit max-w-full mx-auto shadow-[0_8px_30px_rgb(0,0,0,0.6)] ring-1 ring-white/20 rounded-sm overflow-hidden"
+                style={{
+                  backgroundColor:
+                    selectedBackgroundColor === "transparent"
+                      ? undefined
+                      : selectedBackgroundColor,
+                  backgroundImage:
+                    selectedBackgroundColor === "transparent"
+                      ? "conic-gradient(#475569 25%, #334155 0 50%, #475569 0 75%, #334155 0)"
+                      : undefined,
+                  backgroundSize:
+                    selectedBackgroundColor === "transparent" ? "16px 16px" : undefined,
+                }}
+              >
+                <ReactCrop
+                  crop={crop}
+                  onChange={(_c, percentCrop) => setCrop(percentCrop)}
+                  onComplete={(c) => setCompletedCrop(c)}
+                  aspect={aspectRatio}
+                  keepSelection
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={imageSrc}
+                    alt="Upload preview"
+                    onLoad={onImageLoad}
+                    className="block max-h-[62vh] w-auto max-w-full object-contain select-none"
+                    style={{ maxHeight: "62vh", width: "auto", maxWidth: "100%", height: "auto", display: "block" }}
+                  />
+                </ReactCrop>
+                {isRemovingBg && <AIProcessingOverlay stepText={bgRemovalStep} />}
+              </div>
+
+              {/* Re-upload overlay button */}
+              <div
+                {...getRootProps()}
+                className="absolute top-3 right-3 flex cursor-pointer items-center gap-1.5 rounded-ff-sm border border-white/10 bg-ff-canvas/80 px-2 py-1 text-[11px] text-white/40 backdrop-blur-sm transition hover:border-brand-500/40 hover:text-brand-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+              >
+                <input {...getInputProps()} />
+                <Upload className="h-3 w-3" />
+                Replace
+              </div>
             </div>
-          </div>
+          </>
         )}
 
-        {/* Live Telemetry ticker bar */}
-        <div className="bg-ff-canvas-surface border-t border-ff-border-strong/50 px-ff-4 py-ff-2 text-center font-mono text-[11px] tracking-wider text-ff-foreground-muted uppercase">
+        {/* TELEMETRY BAR */}
+        <div className="relative z-20 w-full bg-ff-canvas-surface border-t border-ff-border-strong/50 px-4 py-2.5 font-mono text-[11px] text-ff-foreground-muted uppercase tracking-wider text-center">
           {targetWidth}&thinsp;&times;&thinsp;{targetHeight}&thinsp;px
           &nbsp;&middot;&nbsp;
           {outputFormat === "image/png" ? "PNG · Lossless" : `JPEG · Max ${targetKb} KB`}
@@ -838,34 +848,97 @@ export default function ManualEditor({ presetConfig }: { presetConfig?: PresetCo
         </div>
 
         {/* Compression gauge / live size estimate */}
-        <div className="border border-ff-border rounded-ff-md p-ff-4">
-          <p className="text-[11px] font-mono uppercase text-ff-foreground-muted mb-ff-2">Est. Output</p>
-          <div className="flex items-baseline gap-2">
-            {estimateCapped ? (
-              <>
-                <span className="font-mono text-lg font-bold text-ff-warning">{estimatedFileSize}</span>
-                <span className="text-[11px] font-semibold text-ff-warning-dark">Max Quality Reached</span>
-              </>
-            ) : (
-              <span className={`font-mono text-lg font-bold ${
-                estimatedFileSize === "—" || estimatedFileSize === "Awaiting crop..."
-                  ? "text-ff-foreground-muted"
-                  : estimatedFileSize === "Estimating..."
-                  ? "text-ff-warning animate-pulse"
-                  : "text-ff-success"
-              }`}>
-                {estimatedFileSize === "Estimating..."
-                  ? "Estimating…"
-                  : estimatedFileSize === "Awaiting crop..."
-                  ? "Awaiting crop…"
-                  : estimatedFileSize}
-              </span>
+        {outputFormat === "image/jpeg" && (
+          <div className="border border-ff-border rounded-ff-md p-ff-4">
+            <div className="flex items-center justify-between text-sm mb-2">
+              <span className="text-ff-foreground-muted font-mono uppercase">Compression Target</span>
+              <span className="bg-brand-50 text-brand-700 font-mono px-2 py-0.5 rounded text-xs font-semibold">Max {targetKb} KB</span>
+            </div>
+            <input
+              type="range"
+              aria-label={`Target file size in kilobytes`}
+              min={1}
+              max={Math.max(targetKb * 2, 500)}
+              step={1}
+              value={targetKb}
+              onChange={(e) => setTargetKb(Math.max(1, Math.round(Number(e.target.value))))}
+              disabled={!!presetConfig || !completedCrop}
+              className="w-full cursor-pointer accent-brand-500 disabled:cursor-not-allowed disabled:opacity-40"
+            />
+            <div className="mt-1 flex justify-between text-[11px] font-mono text-ff-foreground-muted">
+              <span>1&thinsp;KB</span>
+              <span>{Math.max(targetKb * 2, 500)}&thinsp;KB</span>
+            </div>
+            {/* Original file size */}
+            {originalSizeBytes && (
+              <div className="text-sm mt-2 text-slate-500 font-medium">
+                Original File Size: {formatBytes(originalSizeBytes)}
+              </div>
             )}
+            {/* Estimated output with failure warning */}
+            <div className="mt-3 rounded-ff-md border border-ff-border bg-ff-surface-subtle px-3 py-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-mono uppercase text-ff-foreground-muted">Est. Output</span>
+                {estimateCapped ? (
+                  <span className="font-mono text-sm font-bold text-ff-warning tabular-nums">
+                    {estimatedFileSize} <span className="text-[10px] font-normal">Max Quality</span>
+                  </span>
+                ) : (() => {
+                  const parsedKb = parseInt(estimatedFileSize.replace(/[^0-9]/g, ""), 10);
+                  const isOver = !isNaN(parsedKb) && parsedKb > targetKb;
+                  return (
+                    <span className={`font-mono text-sm font-bold tabular-nums ${
+                      estimatedFileSize === "—" || estimatedFileSize === "Awaiting crop..."
+                        ? "text-ff-foreground-muted"
+                        : estimatedFileSize === "Estimating..."
+                        ? "text-ff-warning animate-pulse"
+                        : isOver
+                        ? "text-ff-error"
+                        : "text-ff-success"
+                    }`}>
+                      {estimatedFileSize === "Estimating..."
+                        ? "Estimating…"
+                        : estimatedFileSize === "Awaiting crop..."
+                        ? "Awaiting crop…"
+                        : estimatedFileSize === "—"
+                        ? "—"
+                        : `~${estimatedFileSize.replace("≈", "").trim()}`}
+                    </span>
+                  );
+                })()}
+              </div>
+              {(() => {
+                const parsedKb = parseInt(estimatedFileSize.replace(/[^0-9]/g, ""), 10);
+                const isOver = !isNaN(parsedKb) && parsedKb > targetKb && !estimateCapped &&
+                  estimatedFileSize !== "—" && estimatedFileSize !== "Estimating..." && estimatedFileSize !== "Awaiting crop...";
+                return isOver ? (
+                  <p className="text-xs text-ff-error mt-2">Target impossible at current dimensions. Reduce width/height.</p>
+                ) : null;
+              })()}
+            </div>
           </div>
-          <p className="text-[11px] font-mono text-ff-foreground-muted mt-1">
-            Target: {targetKb}&nbsp;KB &middot; {targetWidth}&times;{targetHeight}px
-          </p>
-        </div>
+        )}
+
+        {/* PNG lossless size estimate (no slider) */}
+        {outputFormat === "image/png" && (
+          <div className="border border-ff-border rounded-ff-md p-ff-4">
+            <p className="text-[11px] font-mono uppercase text-ff-foreground-muted mb-ff-2">Est. Output</p>
+            <span className={`font-mono text-lg font-bold ${
+              estimatedFileSize === "—" || estimatedFileSize === "Awaiting crop..."
+                ? "text-ff-foreground-muted"
+                : estimatedFileSize === "Estimating..."
+                ? "text-ff-warning animate-pulse"
+                : "text-ff-success"
+            }`}>
+              {estimatedFileSize === "Estimating..."
+                ? "Estimating…"
+                : estimatedFileSize === "Awaiting crop..."
+                ? "Awaiting crop…"
+                : estimatedFileSize}
+            </span>
+            <p className="text-[11px] font-mono text-ff-foreground-muted mt-1">PNG · Lossless</p>
+          </div>
+        )}
 
         {/* Action buttons */}
         <div className="flex flex-col gap-ff-3 mt-auto">
@@ -898,6 +971,34 @@ export default function ManualEditor({ presetConfig }: { presetConfig?: PresetCo
             )}
             {processing ? "Processing..." : "Process & Compress"}
           </button>
+
+          {/* Pre-Flight Check */}
+          {downloadUrl && estimatedFileSize && estimatedFileSize !== "—" && estimatedFileSize !== "Estimating..." && estimatedFileSize !== "Awaiting crop..." && (
+            <div className="mb-4 rounded-lg bg-ff-success-light p-4 border border-ff-success/20">
+              <div className="flex items-center gap-2 mb-2">
+                <CheckCircle2 className="w-5 h-5 text-ff-success-dark" />
+                <h4 className="font-bold text-ff-success-dark">Pre-Flight Check</h4>
+              </div>
+              <div className="flex flex-col gap-2 ml-7">
+                <div className="flex items-start gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-ff-success mt-0.5" />
+                  <div className="text-sm">
+                    <p className="font-semibold text-ff-foreground">Custom Specs Locked:</p>
+                    <p className="text-ff-foreground-muted font-mono">{targetWidth} × {targetHeight} px</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-ff-success mt-0.5" />
+                  <div className="text-sm">
+                    <p className="font-semibold text-ff-foreground">Target Size Met:</p>
+                    <p className="text-ff-foreground-muted font-mono">
+                      {estimatedFileSize.replace("≈", "").trim()} <span className="text-ff-success-dark">(Max {targetKb} KB)</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Download link */}
           {downloadUrl && (

@@ -14,6 +14,7 @@ export const ssc_chslConfig: FormatConfig = {
       height: 0,
       minKb: 10,
       maxKb: 50,
+      isLiveCapture: true,
       stampRequired: false,
       rules: {
         captureMethod: 'Live capture via webcam or official My SSC mobile application',

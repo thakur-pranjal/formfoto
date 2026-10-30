@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import GlobalHeader from "@/components/shell/GlobalHeader";
 import GlobalFooter from "@/components/shell/GlobalFooter";
+import GlobalFeedbackWidget from "@/components/ui/GlobalFeedbackWidget";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,6 +36,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <GlobalFeedbackWidget />
         <GlobalHeader />
         {children}
         <GlobalFooter />

@@ -5,12 +5,13 @@ import {
   useRef,
   useCallback,
   useEffect,
+  useMemo,
   type SyntheticEvent,
 } from "react";
+import { resolveSpecFallbacks, isLiveCaptureRequired } from "@/utils/fallbackResolver";
+import { formatBytes } from "@/utils/formatBytes";
 import { useDropzone } from "react-dropzone";
 import ReactCrop, {
-  centerCrop,
-  makeAspectCrop,
   type PixelCrop,
   type PercentCrop,
 } from "react-image-crop";
@@ -27,24 +28,56 @@ import {
   XCircle,
   AlertTriangle,
   ExternalLink,
+  HelpCircle,
 } from "lucide-react";
 import { type VisaPassportConfig } from "@/config/visas/types";
+import FeedbackModal from "@/components/ui/FeedbackModal";
+import BiometricOverlay from "@/components/BiometricOverlay";
 import "react-image-crop/dist/ReactCrop.css";
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
+const getVerificationDate = () => {
+  const d = new Date();
+  const monthOffset = d.getDate() < 8 ? 2 : 1;
+  d.setMonth(d.getMonth() - monthOffset);
+  return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+};
+
 function centerAspectCrop(
   mediaWidth: number,
   mediaHeight: number,
   aspect: number
 ): PercentCrop {
-  return centerCrop(
-    makeAspectCrop({ unit: "%", width: 90 }, aspect, mediaWidth, mediaHeight),
-    mediaWidth,
-    mediaHeight
-  );
+  // Define default crop height (50% of the image height)
+  let cropHeight = mediaHeight * 0.5;
+  // Calculate required width using the active aspect ratio
+  let cropWidth = cropHeight * aspect;
+
+  // Scale down if crop dimensions exceed image boundaries
+  if (cropWidth > mediaWidth) {
+    cropWidth = mediaWidth * 0.9;
+    cropHeight = cropWidth / aspect;
+  }
+  if (cropHeight > mediaHeight) {
+    cropHeight = mediaHeight * 0.9;
+    cropWidth = cropHeight * aspect;
+  }
+
+  // Calculate center coordinates: x = (imageWidth - cropWidth) / 2 and y = (imageHeight - cropHeight) / 2
+  const x = (mediaWidth - cropWidth) / 2;
+  const y = (mediaHeight - cropHeight) / 2;
+
+  // Inject exact centered coordinates into ReactCrop state (PercentCrop)
+  return {
+    unit: "%",
+    x: (x / mediaWidth) * 100,
+    y: (y / mediaHeight) * 100,
+    width: (cropWidth / mediaWidth) * 100,
+    height: (cropHeight / mediaHeight) * 100,
+  };
 }
 
 const MAX_BG_DIMENSION = 1024;
@@ -152,10 +185,16 @@ const compositeTransparentOnBg = async (blob: Blob, bgHex: string) => {
 // Config derivation helpers
 // ---------------------------------------------------------------------------
 
-function derivePixelDimensions(config: VisaPassportConfig): {
+function derivePixelDimensions(config: any): {
   width: number;
   height: number;
 } {
+  if (config.width && config.height) {
+    return {
+      width: config.width,
+      height: config.height,
+    };
+  }
   if (
     config.digital?.minWidthPx &&
     config.digital?.minHeightPx
@@ -166,19 +205,22 @@ function derivePixelDimensions(config: VisaPassportConfig): {
     };
   }
   // Derive from physical dimensions + DPI
-  const dpi = config.physical.targetDpi;
-  const width = Math.round((config.physical.widthMm * dpi) / 25.4);
-  const height = Math.round((config.physical.heightMm * dpi) / 25.4);
-  return { width, height };
+  if (config.physical) {
+    const dpi = config.physical.targetDpi || 300;
+    const width = Math.round(((config.physical.widthMm || 35) * dpi) / 25.4);
+    const height = Math.round(((config.physical.heightMm || 45) * dpi) / 25.4);
+    return { width, height };
+  }
+  return { width: 413, height: 531 };
 }
 
-function deriveKbLimits(config: VisaPassportConfig): {
+function deriveKbLimits(config: any): {
   minKb: number;
   maxKb: number;
 } {
   return {
-    minKb: config.digital?.minKb ?? 50,
-    maxKb: config.digital?.maxKb ?? 500,
+    minKb: config.minKb ?? config.digital?.minKb ?? 50,
+    maxKb: config.maxKb ?? config.digital?.maxKb ?? 500,
   };
 }
 
@@ -218,9 +260,10 @@ const AIProcessingOverlay = ({ stage }: { stage: "optimizing" | "removing" }) =>
 
 interface BiometricGuideProps {
   config: VisaPassportConfig;
+  className?: string;
 }
 
-function BiometricGuideOverlay({ config }: BiometricGuideProps) {
+function BiometricGuideOverlay({ config, className }: BiometricGuideProps) {
   const { headRatioMin, headRatioMax, eyeLinePercentFromBottom } = config.biometrics;
 
   // All positions are expressed as % of the crop-box height.
@@ -256,7 +299,7 @@ function BiometricGuideOverlay({ config }: BiometricGuideProps) {
     <svg
       viewBox="0 0 100 100"
       preserveAspectRatio="none"
-      className="absolute inset-0 pointer-events-none w-full h-full z-10"
+      className={className ?? "absolute inset-0 pointer-events-none w-full h-full z-10"}
       aria-hidden="true"
     >
       <defs>
@@ -364,14 +407,28 @@ interface CompliancePanelProps {
   mode: "passport" | "visa";
   pixelWidth: number;
   pixelHeight: number;
+  /** Field-group keys hydrated by the fallback resolver (e.g. 'fileSize'). */
+  derivedFields: string[];
+  onReportChange?: () => void;
 }
+
+/** Amber badge rendered next to any Pre-Flight row whose value was auto-derived. */
+const StandardBadge = () => (
+  <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-800 border border-amber-200 uppercase tracking-wider">
+    Standard
+  </span>
+);
 
 function CompliancePanel({
   config,
   pixelWidth,
   pixelHeight,
+  derivedFields,
+  onReportChange,
 }: CompliancePanelProps) {
   const { biometrics, background, physical, sourceVerification } = config;
+  const [internalFeedbackOpen, setInternalFeedbackOpen] = useState(false);
+  const handleReportChange = onReportChange || (() => setInternalFeedbackOpen(true));
 
   return (
     <div className="bg-ff-surface border border-ff-border rounded-ff-lg shadow-ff-sm p-ff-6 flex flex-col gap-ff-6">
@@ -398,6 +455,7 @@ function CompliancePanel({
             />
             <span className="text-xs font-semibold text-ff-foreground">{background.label}</span>
             <span className="text-[10px] font-mono text-ff-foreground-muted">{background.requiredHex}</span>
+            {derivedFields.includes("background") && <StandardBadge />}
           </div>
         </div>
 
@@ -411,15 +469,19 @@ function CompliancePanel({
             <span className="rounded-ff-sm bg-ff-surface-subtle border border-ff-border px-1.5 py-0.5 text-[10px] font-mono text-ff-foreground-muted">
               {physical.targetDpi} DPI
             </span>
+            {derivedFields.includes("dimensions") && <StandardBadge />}
           </div>
         </div>
 
         {/* Digital size */}
         <div className="flex items-center justify-between py-2.5">
           <span className="text-[11px] font-mono uppercase tracking-wider text-ff-foreground-muted">Digital Size</span>
-          <span className="text-xs font-semibold text-ff-foreground">
-            {pixelWidth} × {pixelHeight} px
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-ff-foreground">
+              {pixelWidth} × {pixelHeight} px
+            </span>
+            {derivedFields.includes("fileSize") && <StandardBadge />}
+          </div>
         </div>
 
         {/* Paper finish */}
@@ -467,9 +529,12 @@ function CompliancePanel({
         {/* Face / Frame ratio */}
         <div className="flex items-center justify-between py-2.5">
           <span className="text-[11px] font-mono uppercase tracking-wider text-ff-foreground-muted">Face / Frame</span>
-          <span className="text-xs font-semibold text-ff-foreground">
-            {Math.round(biometrics.headRatioMin * 100)}–{Math.round(biometrics.headRatioMax * 100)}% of height
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-ff-foreground">
+              {Math.round(biometrics.headRatioMin * 100)}–{Math.round(biometrics.headRatioMax * 100)}% of height
+            </span>
+            {derivedFields.includes("facePercentage") && <StandardBadge />}
+          </div>
         </div>
 
       </div>
@@ -496,10 +561,18 @@ function CompliancePanel({
 
       {/* ── Authority footer ─────────────────────────────────── */}
       <div className="border-t border-ff-border pt-4 space-y-1">
-        <p className="text-[11px] text-ff-foreground-muted">
+        <p className="text-[11px] text-ff-foreground-muted flex flex-wrap items-center">
           Verified by{" "}
           <span className="text-ff-foreground-secondary font-medium">{sourceVerification.authority}</span>
-          {" · "}Last verified {sourceVerification.lastVerifiedDate}
+          {" · "}Last verified {getVerificationDate()}
+          <span className="mx-2 text-slate-300">•</span>
+          <button
+            type="button"
+            onClick={handleReportChange}
+            className="text-slate-500 hover:text-brand-600 transition-colors cursor-pointer text-sm font-medium"
+          >
+            Report a change
+          </button>
         </p>
         <a
           href={sourceVerification.officialUrl}
@@ -510,6 +583,14 @@ function CompliancePanel({
           Official guidelines <ExternalLink className="h-3 w-3" />
         </a>
       </div>
+      {!onReportChange && (
+        <FeedbackModal
+          isOpen={internalFeedbackOpen}
+          onClose={() => setInternalFeedbackOpen(false)}
+          title="Report a Specification Change"
+          description="Has something changed in the official requirements? Let us know and we'll update the spec."
+        />
+      )}
     </div>
   );
 }
@@ -519,15 +600,27 @@ function CompliancePanel({
 // ---------------------------------------------------------------------------
 
 interface BiometricStudioProps {
-  config: VisaPassportConfig;
-  mode: "passport" | "visa";
+  config: VisaPassportConfig | any;
+  mode?: "passport" | "visa" | string;
 }
 
-export default function BiometricStudio({ config, mode }: BiometricStudioProps) {
+export default function BiometricStudio({ config: incomingConfig, mode = "passport" }: BiometricStudioProps) {
+  // ---------------------------------------------------------------------------
+  // Fallback Engine — hydrate missing spec fields with industry-standard defaults.
+  // Memoised so the structuredClone + resolver only runs when the incoming prop
+  // or mode actually changes, preventing unnecessary canvas redraws.
+  // ---------------------------------------------------------------------------
+  const { hydratedSpec: config, derivedFields } = useMemo(
+    () => resolveSpecFallbacks(incomingConfig, mode),
+    [incomingConfig, mode]
+  );
+
   // Derived constants from config (stable, no state needed)
-  const aspectRatio = config.aspectRatio;
   const { width: pixelWidth, height: pixelHeight } = derivePixelDimensions(config);
+  const aspectRatio = config.aspectRatio || (pixelWidth / (pixelHeight || 1)) || 1;
   const { minKb, maxKb } = deriveKbLimits(config);
+  // True when the exam/visa portal mandates live webcam capture and rejects uploads.
+  const isLiveCapture = config.isLiveCapture === true || isLiveCaptureRequired(config);
 
   // State
   const [imageSrc, setImageSrc] = useState<string | null>(null);
@@ -540,9 +633,26 @@ export default function BiometricStudio({ config, mode }: BiometricStudioProps) 
   const [targetKb, setTargetKb] = useState(Math.min(Math.round((minKb + maxKb) / 2), maxKb));
   const [displayTargetKb, setDisplayTargetKb] = useState(Math.min(Math.round((minKb + maxKb) / 2), maxKb));
   const [estimatedFileSize, setEstimatedFileSize] = useState("—");
+  const [finalFileSize, setFinalFileSize] = useState<number | null>(null);
   const [showGuide, setShowGuide] = useState(true);
+  const [showInfoPopover, setShowInfoPopover] = useState(false);
   const [isRemovingBg, setIsRemovingBg] = useState(false);
   const [removeBgStage, setRemoveBgStage] = useState<"idle" | "optimizing" | "removing">("idle");
+  const [originalSizeBytes, setOriginalSizeBytes] = useState<number | null>(null);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+
+  // Reset isDragging if mouse or touch is released anywhere on screen
+  useEffect(() => {
+    if (!isDragging) return;
+    const handleRelease = () => setIsDragging(false);
+    window.addEventListener("mouseup", handleRelease);
+    window.addEventListener("touchend", handleRelease);
+    return () => {
+      window.removeEventListener("mouseup", handleRelease);
+      window.removeEventListener("touchend", handleRelease);
+    };
+  }, [isDragging]);
 
   const imgRef = useRef<HTMLImageElement | null>(null);
   const imageContainerRef = useRef<HTMLDivElement>(null);
@@ -599,6 +709,7 @@ export default function BiometricStudio({ config, mode }: BiometricStudioProps) 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
     if (!file) return;
+    setOriginalSizeBytes(file.size);
     const reader = new FileReader();
     reader.onload = () => {
       setImageSrc(reader.result as string);
@@ -618,7 +729,7 @@ export default function BiometricStudio({ config, mode }: BiometricStudioProps) 
   });
 
   // ---------------------------------------------------------------------------
-  // Image load handler
+  // Image load handler — immediately sets standard centered crop based on aspect ratio
   // ---------------------------------------------------------------------------
 
   const onImageLoad = (e: SyntheticEvent<HTMLImageElement>) => {
@@ -863,19 +974,21 @@ export default function BiometricStudio({ config, mode }: BiometricStudioProps) 
   }, [completedCrop, findQualityForKB, imageSrc, renderPhotoCanvas, targetKb]);
 
   // ---------------------------------------------------------------------------
-  // Export: Digital
+  // Process & Compress — generates both digital + print blobs, no auto-download
   // ---------------------------------------------------------------------------
 
-  const exportDigital = async () => {
+  const handleProcess = async () => {
     if (!completedCrop) return;
     setProcessing(true);
     setError(null);
+    setFinalFileSize(null);
 
     try {
-      const canvas = renderPhotoCanvas();
-      if (!canvas) throw new Error("Unable to prepare canvas.");
+      const photoCanvas = renderPhotoCanvas();
+      if (!photoCanvas) throw new Error("Unable to prepare canvas.");
 
-      const { quality, sizeKb } = await findQualityForKB(canvas, targetKb);
+      // ── Digital: binary-search to target KB ──────────────────────────────
+      const { quality, sizeKb } = await findQualityForKB(photoCanvas, targetKb);
 
       if (sizeKb < minKb || sizeKb > maxKb) {
         throw new Error(
@@ -883,49 +996,20 @@ export default function BiometricStudio({ config, mode }: BiometricStudioProps) 
         );
       }
 
-      const blob = await canvasToBlob(canvas, "image/jpeg", quality);
+      const digitalBlob = await canvasToBlob(photoCanvas, "image/jpeg", quality);
       if (digitalUrl) URL.revokeObjectURL(digitalUrl);
-      const url = URL.createObjectURL(blob);
-      setDigitalUrl(url);
+      setDigitalUrl(URL.createObjectURL(digitalBlob));
       setEstimatedFileSize(`≈${sizeKb} KB`);
+      setFinalFileSize(sizeKb);
 
-      // Auto-trigger download
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${config.id}_digital_${pixelWidth}x${pixelHeight}.jpg`;
-      a.click();
+      // ── Print-ready sheet ─────────────────────────────────────────────────
+      const sheetCanvas = renderPrintSheet(photoCanvas);
+      const sheetBlob = await canvasToBlob(sheetCanvas, "image/jpeg", 0.95);
+      if (printUrl) URL.revokeObjectURL(printUrl);
+      setPrintUrl(URL.createObjectURL(sheetBlob));
     } catch (err) {
       setError((err as Error).message || "Failed to process image.");
-    } finally {
-      setProcessing(false);
-    }
-  };
-
-  // ---------------------------------------------------------------------------
-  // Export: Print-Ready Sheet
-  // ---------------------------------------------------------------------------
-
-  const exportPrintSheet = async () => {
-    if (!completedCrop) return;
-    setProcessing(true);
-    setError(null);
-
-    try {
-      const photoCanvas = renderPhotoCanvas();
-      if (!photoCanvas) throw new Error("Unable to prepare canvas.");
-
-      const sheetCanvas = renderPrintSheet(photoCanvas);
-      const blob = await canvasToBlob(sheetCanvas, "image/jpeg", 0.95);
-      if (printUrl) URL.revokeObjectURL(printUrl);
-      const url = URL.createObjectURL(blob);
-      setPrintUrl(url);
-
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${config.id}_print_sheet_4x6.jpg`;
-      a.click();
-    } catch (err) {
-      setError((err as Error).message || "Failed to generate print sheet.");
+      setFinalFileSize(null);
     } finally {
       setProcessing(false);
     }
@@ -963,180 +1047,220 @@ export default function BiometricStudio({ config, mode }: BiometricStudioProps) 
       </div>
 
       {/* ─── Main 2-column grid ───────────────────────────────── */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_380px]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_380px] items-start">
 
         {/* ═══ LEFT COLUMN — Dark Optical Stage ═══ */}
         <div className="space-y-3">
 
-          {/* Dropzone */}
-          {!imageSrc && (
-            <div
-              {...getRootProps()}
-              className={`group flex min-h-[420px] cursor-pointer items-center justify-center rounded-ff-lg border-2 border-dashed p-10 transition-all duration-[180ms] focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 bg-[radial-gradient(#ffffff14_1px,transparent_1px)] [background-size:16px_16px] ${
-                isDragActive
-                  ? "border-brand-400 bg-ff-canvas/80 text-white"
-                  : "border-ff-border-strong bg-ff-canvas hover:border-brand-400 hover:bg-ff-canvas"
-              }`}
-            >
-              <input {...getInputProps()} />
-              <div className="space-y-4 text-center">
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-ff-lg bg-brand-500/20 text-brand-400 shadow-lg">
-                  <Upload className="h-7 w-7" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-white/80">
-                    {isDragActive ? "Drop your photo here" : "Drop your photo here, or click to browse"}
-                  </p>
-                  <p className="mt-1.5 text-xs text-white/40">
-                    JPG · PNG · WEBP &nbsp;·&nbsp; Front-facing, well-lit portrait recommended
-                  </p>
-                </div>
+          {/* Live Capture bypass — replaces the entire upload/canvas UI */}
+          {isLiveCapture ? (
+            <div className="flex flex-col items-center justify-center p-12 text-center bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl">
+              <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm border border-slate-100 mb-6">
+                <svg className="w-8 h-8 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+              </div>
+              <h3 className="text-xl font-semibold text-slate-900 mb-2">Live Web-Capture Required</h3>
+              <p className="text-slate-500 max-w-md mx-auto mb-6">
+                The official portal for this exam no longer accepts pre-uploaded photos. You must use a live webcam directly on their application website.
+              </p>
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-left w-full max-w-md">
+                <h4 className="text-sm font-semibold text-amber-800 uppercase tracking-wider mb-2">Preparation Checklist</h4>
+                <ul className="text-sm text-amber-700 space-y-1 list-disc pl-4">
+                  <li>Sit against a plain, light-colored background.</li>
+                  <li>Ensure bright, even lighting on your face.</li>
+                  <li>Remove glasses, caps, and face coverings.</li>
+                </ul>
               </div>
             </div>
-          )}
+          ) : (
+            <>
+              {/* Dropzone */}
+              {!imageSrc && (
+                <div className="relative w-full h-fit flex flex-col bg-ff-canvas border border-ff-border-strong rounded-ff-lg overflow-hidden shadow-ff-sm self-start">
+                  <div
+                    {...getRootProps()}
+                    className={`cursor-pointer [&_*]:cursor-pointer group border border-transparent flex min-h-[420px] items-center justify-center p-10 transition-all duration-[180ms] focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 bg-[radial-gradient(#ffffff14_1px,transparent_1px)] [background-size:16px_16px] hover:border-brand-500 hover:bg-brand-500/5 hover:shadow-[0_0_30px_rgba(49,92,234,0.15)] ${
+                      isDragActive
+                        ? "border-brand-400 bg-ff-canvas/80 text-white"
+                        : ""
+                    }`}
+                  >
+                    <input {...getInputProps()} />
 
-          {/* ─── Canvas workspace (shown after upload) ─── */}
-          {imageSrc && (
-            <div className="space-y-3">
-
-              {/* Dark Optical Stage — recessed dark container */}
-              <div
-                className="bg-ff-canvas border border-ff-border-strong rounded-ff-lg overflow-hidden shadow-[inset_0_2px_8px_rgba(0,0,0,0.4)]"
-              >
-                {/* Canvas area */}
-                <div
-                  className="relative flex items-center justify-center bg-[radial-gradient(#ffffff14_1px,transparent_1px)] [background-size:16px_16px]"
-                  style={{
-                    minHeight: "400px",
-                  }}
-                >
-                  {/* Inner wrapper — ref'd by ResizeObserver */}
-                  <div className="relative" ref={imageContainerRef}>
-                    <ReactCrop
-                      crop={crop}
-                      onChange={(_c, percentCrop) => setCrop(percentCrop)}
-                      onComplete={(c) => setCompletedCrop(c)}
-                      aspect={aspectRatio}
-                      keepSelection
-                      className="max-h-[62vh]"
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={imageSrc}
-                        alt="Uploaded photo"
-                        onLoad={onImageLoad}
-                        className="max-h-[62vh] max-w-full"
-                      />
-                    </ReactCrop>
-
-                    {/* Biometric guide overlay — pinned via ResizeObserver dims */}
-                    {showGuide && (
-                      <div
-                        style={{
-                          position: "absolute",
-                          top: 0,
-                          left: overlayDims.left,
-                          width: overlayDims.width || "100%",
-                          height: overlayDims.height || "100%",
-                          pointerEvents: "none",
-                          zIndex: 10,
-                        }}
-                      >
-                        <BiometricGuideOverlay config={config} />
+                    {/* This wrapper ensures the cursor fix remains active */}
+                    <div className="flex flex-col items-center justify-center w-full h-full pointer-events-none select-none p-6">
+                      {/* 1. The Icon Wrapper (Sleek Circle) */}
+                      <div className="w-16 h-16 mb-5 flex items-center justify-center rounded-full bg-white/5 border border-white/10 transition-colors duration-[180ms] group-hover:bg-brand-500/10 group-hover:border-brand-500/30">
+                        <Upload className="w-8 h-8 text-slate-400 transition-all duration-[180ms] group-hover:-translate-y-1 group-hover:text-brand-400 group-hover:scale-110" />
                       </div>
-                    )}
 
-                    {/* BG removal processing overlay */}
-                    {isRemovingBg && removeBgStage !== "idle" && (
-                      <AIProcessingOverlay stage={removeBgStage} />
-                    )}
+                      {/* 2. The Headings */}
+                      <h3 className="text-lg font-medium text-white mb-2">
+                        {isDragActive
+                          ? "Drop your photo here"
+                          : mode === "passport"
+                            ? "Upload your Passport Photo here"
+                            : "Upload your Visa Photo here"}
+                      </h3>
+                      <p className="text-sm text-slate-400 max-w-sm mx-auto text-center leading-relaxed">
+                        JPG · PNG · WEBP · Front-facing, well-lit portrait recommended
+                      </p>
+
+                      {/* 3. The Pill Button */}
+                      <div className="mt-6 inline-flex items-center justify-center px-5 py-2 rounded-lg border border-white/10 bg-white/5 text-sm font-medium text-slate-300 transition-all duration-[180ms] group-hover:bg-brand-500/20 group-hover:border-brand-500/50 group-hover:text-white shadow-sm">
+                        Or click to browse files
+                      </div>
+                    </div>
                   </div>
-                </div>
-
-                {/* Live Telemetry Ticker Bar */}
-                <div className="bg-ff-canvas-surface border-t border-ff-border-strong/50 px-ff-4 py-ff-2 text-center font-mono text-[11px] tracking-wider text-ff-foreground-muted uppercase">
-                  {pixelWidth} × {pixelHeight} px · {config.physical.targetDpi} DPI · {config.physical.widthMm}×{config.physical.heightMm} mm
-                  {completedCrop ? (
-                    <span className="ml-3 text-brand-400">✓ crop active</span>
-                  ) : (
-                    <span className="ml-3 text-white/30">— awaiting crop</span>
-                  )}
-                </div>
-              </div>
-
-              {/* ─── Pill Toolbar ─────────────────────────────── */}
-              <div className="flex items-center justify-between rounded-ff-pill border border-ff-border bg-ff-surface p-1.5 shadow-ff-sm">
-
-                {/* Left cluster: Change Photo + Remove BG */}
-                <div className="flex items-center gap-1">
-                  {/* Change photo */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setImageSrc(null);
-                      setCrop(undefined);
-                      setCompletedCrop(undefined);
-                      setDigitalUrl(null);
-                      setPrintUrl(null);
-                      setError(null);
-                    }}
-                    className="inline-flex items-center gap-2 rounded-ff-pill px-4 py-2 text-sm font-medium text-ff-foreground-secondary transition hover:bg-ff-surface-subtle hover:text-ff-foreground"
-                  >
-                    <Upload className="h-3.5 w-3.5" />
-                    Change Photo
-                  </button>
-
-                  {/* Divider */}
-                  <span className="h-5 w-px bg-ff-border" />
-
-                  {/* Remove BG */}
-                  <button
-                    type="button"
-                    onClick={handleRemoveBackground}
-                    disabled={isRemovingBg || !imageSrc}
-                    className="inline-flex items-center gap-2 rounded-ff-pill px-4 py-2 text-sm font-medium text-ff-foreground-secondary transition hover:bg-ff-surface-subtle hover:text-ff-foreground disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    {isRemovingBg ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <span className="text-sm leading-none">✨</span>
-                    )}
-                    {removeBgStage !== "idle"
-                      ? removeBgStage === "optimizing"
-                        ? "Optimising…"
-                        : "Removing BG…"
-                      : "Remove BG"}
-                  </button>
-                </div>
-
-                {/* Right cluster: Guide toggle */}
-                <button
-                  type="button"
-                  onClick={() => setShowGuide((v) => !v)}
-                  className={`inline-flex items-center gap-2 rounded-ff-pill px-4 py-2 text-sm font-medium transition duration-[120ms] ${
-                    showGuide
-                      ? "bg-brand-50 text-brand-600 border border-brand-200"
-                      : "text-ff-foreground-muted hover:bg-ff-surface-subtle hover:text-ff-foreground"
-                  }`}
-                >
-                  {showGuide ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
-                  Guide {showGuide ? "ON" : "OFF"}
-                </button>
-              </div>
-
-              {/* Error */}
-              {error && (
-                <div className="flex items-start gap-2 rounded-ff-md border border-ff-error/20 bg-ff-error-light p-3">
-                  <XCircle className="h-4 w-4 text-ff-error mt-0.5 flex-shrink-0" />
-                  <p className="text-sm text-ff-error-dark">{error}</p>
+                  {/* Telemetry bar */}
+                  <div className="relative z-20 w-full bg-ff-canvas-surface border-t border-ff-border-strong/50 px-4 py-2.5 font-mono text-[11px] text-ff-foreground-muted uppercase tracking-wider text-center">
+                    {pixelWidth} × {pixelHeight} px · {config.physical.targetDpi} DPI · {config.physical.widthMm}×{config.physical.heightMm} mm
+                  </div>
                 </div>
               )}
 
-              {/* Disclaimer */}
-              <p className="text-[11px] leading-relaxed text-ff-foreground-muted">
-                {config.sourceVerification.disclaimer}
-              </p>
-            </div>
+              {/* ─── Canvas workspace (shown after upload) ─── */}
+              {imageSrc && (
+                <div className="space-y-3">
+
+                  {/* Dark Optical Stage — Ambient Blur Backdrop */}
+                  <div className="relative w-full h-fit flex flex-col bg-ff-canvas border border-ff-border-strong rounded-ff-lg overflow-hidden shadow-ff-sm self-start">
+
+                    {/* AMBIENT BLUR BACKDROP */}
+                    {imageSrc && (
+                      <div
+                        className="absolute inset-0 bg-cover bg-center blur-2xl opacity-40 scale-110 pointer-events-none"
+                        style={{ backgroundImage: `url(${imageSrc})` }}
+                      />
+                    )}
+
+                    {/* STAGE AREA */}
+                    <div className="relative flex-1 w-full flex items-center justify-center p-4 sm:p-6 bg-[radial-gradient(#ffffff14_1px,transparent_1px)] [background-size:16px_16px] z-10">
+
+                      {/* INNER SHRINK-WRAP CONTAINER */}
+                      <div
+                        className="relative inline-flex items-center justify-center w-fit h-fit max-w-full mx-auto shadow-[0_8px_30px_rgb(0,0,0,0.6)] ring-1 ring-white/20 rounded-sm overflow-hidden bg-black"
+                        ref={imageContainerRef}
+                        onMouseDown={() => setIsDragging(true)}
+                        onMouseUp={() => setIsDragging(false)}
+                        onTouchStart={() => setIsDragging(true)}
+                        onTouchEnd={() => setIsDragging(false)}
+                      >
+                        <ReactCrop
+                          crop={crop}
+                          onChange={(_c, percentCrop) => setCrop(percentCrop)}
+                          onComplete={(c) => setCompletedCrop(c)}
+                          aspect={aspectRatio}
+                          keepSelection
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={imageSrc}
+                            alt="Uploaded photo"
+                            onLoad={onImageLoad}
+                            className="block max-h-[62vh] w-auto max-w-full object-contain select-none"
+                            style={{ maxHeight: "62vh", width: "auto", maxWidth: "100%", height: "auto", display: "block" }}
+                          />
+                        </ReactCrop>
+
+                        {/* BiometricOverlay — dynamic stencil overlay with drag fade */}
+                        {showGuide && (
+                          <BiometricOverlay isDragging={isDragging} />
+                        )}
+
+                        {/* BG removal processing overlay */}
+                        {isRemovingBg && removeBgStage !== "idle" && (
+                          <AIProcessingOverlay stage={removeBgStage} />
+                        )}
+                      </div>
+                    </div>
+
+                    {/* TELEMETRY BAR */}
+                    <div className="relative z-20 w-full bg-ff-canvas-surface border-t border-ff-border-strong/50 px-4 py-2.5 font-mono text-[11px] text-ff-foreground-muted uppercase tracking-wider text-center">
+                      {pixelWidth} × {pixelHeight} px · {config.physical.targetDpi} DPI · {config.physical.widthMm}×{config.physical.heightMm} mm
+                      {completedCrop ? (
+                        <span className="ml-3 text-brand-400">✓ crop active</span>
+                      ) : (
+                        <span className="ml-3 text-white/30">— awaiting crop</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* ─── Pill Toolbar ─────────────────────────────── */}
+                  <div className="flex items-center justify-between rounded-ff-pill border border-ff-border bg-ff-surface p-1.5 shadow-ff-sm">
+
+                    {/* Left cluster: Change Photo + Remove BG */}
+                    <div className="flex items-center gap-1">
+                      {/* Change photo */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setImageSrc(null);
+                          setCrop(undefined);
+                          setCompletedCrop(undefined);
+                          setDigitalUrl(null);
+                          setPrintUrl(null);
+                          setError(null);
+                          setOriginalSizeBytes(null);
+                        }}
+                        className="inline-flex items-center gap-2 rounded-ff-pill px-4 py-2 text-sm font-medium text-ff-foreground-secondary transition hover:bg-ff-surface-subtle hover:text-ff-foreground"
+                      >
+                        <Upload className="h-3.5 w-3.5" />
+                        Change Photo
+                      </button>
+
+                      {/* Divider */}
+                      <span className="h-5 w-px bg-ff-border" />
+
+                      {/* Remove BG */}
+                      <button
+                        type="button"
+                        onClick={handleRemoveBackground}
+                        disabled={isRemovingBg || !imageSrc}
+                        className="inline-flex items-center gap-2 rounded-ff-pill px-4 py-2 text-sm font-medium text-ff-foreground-secondary transition hover:bg-ff-surface-subtle hover:text-ff-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        {isRemovingBg ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <span className="text-sm leading-none">✨</span>
+                        )}
+                        {removeBgStage !== "idle"
+                          ? removeBgStage === "optimizing"
+                            ? "Optimising…"
+                            : "Removing BG…"
+                          : "Remove BG"}
+                      </button>
+                    </div>
+
+                    {/* Right cluster: Guide toggle */}
+                    <button
+                      type="button"
+                      onClick={() => setShowGuide((v) => !v)}
+                      className={`inline-flex items-center gap-2 rounded-ff-pill px-4 py-2 text-sm font-medium transition duration-[120ms] ${
+                        showGuide
+                          ? "bg-brand-50 text-brand-600 border border-brand-200"
+                          : "text-ff-foreground-muted hover:bg-ff-surface-subtle hover:text-ff-foreground"
+                      }`}
+                    >
+                      {showGuide ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+                      Guide {showGuide ? "ON" : "OFF"}
+                    </button>
+                  </div>
+
+                  {/* Error */}
+                  {error && (
+                    <div className="flex items-start gap-2 rounded-ff-md border border-ff-error/20 bg-ff-error-light p-3">
+                      <XCircle className="h-4 w-4 text-ff-error mt-0.5 flex-shrink-0" />
+                      <p className="text-sm text-ff-error-dark">{error}</p>
+                    </div>
+                  )}
+
+                  {/* Disclaimer */}
+                  <p className="text-[11px] leading-relaxed text-ff-foreground-muted">
+                    {config.sourceVerification.disclaimer}
+                  </p>
+                </div>
+              )}
+            </>
           )}
         </div>
 
@@ -1149,93 +1273,196 @@ export default function BiometricStudio({ config, mode }: BiometricStudioProps) 
             mode={mode}
             pixelWidth={pixelWidth}
             pixelHeight={pixelHeight}
+            derivedFields={derivedFields}
+            onReportChange={() => setIsFeedbackOpen(true)}
           />
 
-          {/* ─── Compression Gauge ─────────────────────────── */}
-          <div className="bg-ff-surface border border-ff-border rounded-ff-lg shadow-ff-sm p-ff-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-mono uppercase tracking-wider text-ff-foreground-muted">
-                Target File Size
-              </span>
-              <span className="text-[11px] font-mono text-ff-foreground-secondary">
-                {estimatedFileSize}
-              </span>
-            </div>
-
-            {/* Technical mono readout */}
-            <div className="flex items-baseline gap-2">
-              <span className="font-mono text-2xl font-bold tabular-nums text-ff-foreground leading-none">
-                {displayTargetKb}
-              </span>
-              <span className="font-mono text-sm text-ff-foreground-muted">KB</span>
-              <span className="ml-auto font-mono text-[10px] text-ff-foreground-muted">
-                {minKb}–{maxKb} KB
-              </span>
-            </div>
-
-            {/* Segmented gauge track */}
-            <div className="relative h-2 w-full overflow-hidden rounded-ff-pill bg-ff-surface-subtle border border-ff-border">
-              <div
-                className="absolute inset-y-0 left-0 rounded-ff-pill bg-brand-500 transition-all duration-[120ms]"
-                style={{ width: `${gaugePercent}%` }}
+          {/* ─── Compression Gauge — hidden for live-capture specs ───── */}
+          {!isLiveCapture && imageSrc && (
+            <div className="bg-ff-surface border border-ff-border rounded-ff-lg shadow-ff-sm p-ff-4">
+              <div className="flex items-center justify-between text-sm mb-2">
+                <span className="text-ff-foreground-muted font-mono uppercase">Compression Target</span>
+                <span className="bg-brand-50 text-brand-700 font-mono px-2 py-0.5 rounded text-xs font-semibold">Max {displayTargetKb} KB</span>
+              </div>
+              <input
+                type="range"
+                aria-label={`Target file size in kilobytes, between ${minKb} and ${maxKb}`}
+                min={minKb}
+                max={maxKb}
+                step={1}
+                value={displayTargetKb}
+                onChange={(e) => {
+                  const v = Math.round(Number(e.target.value));
+                  setDisplayTargetKb(v);
+                  setTargetKb(v);
+                }}
+                disabled={!completedCrop}
+                className="w-full cursor-pointer accent-brand-500 disabled:cursor-not-allowed disabled:opacity-40"
               />
+              <div className="mt-1 flex justify-between text-[11px] font-mono text-ff-foreground-muted">
+                <span>{minKb}&thinsp;KB</span>
+                <span>{maxKb}&thinsp;KB</span>
+              </div>
+              {/* Original file size */}
+              {originalSizeBytes && (
+                <div className="text-sm mt-2 text-slate-500 font-medium">
+                  Original File Size: {formatBytes(originalSizeBytes)}
+                </div>
+              )}
+              {/* Estimated output */}
+              <div className="relative mt-3 flex items-center justify-between rounded-ff-md border border-ff-border bg-ff-surface-subtle px-3 py-2">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[11px] font-mono uppercase text-ff-foreground-muted">Est. Output</span>
+                  <button
+                    type="button"
+                    id="bio-size-info-trigger"
+                    aria-label="Why is the size approximate?"
+                    onClick={() => setShowInfoPopover((v) => !v)}
+                    className="cursor-pointer text-ff-foreground-muted hover:text-brand-500 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 rounded-full"
+                  >
+                    <HelpCircle className="h-3 w-3" />
+                  </button>
+                </div>
+                <span
+                  className={`font-mono text-sm font-bold tabular-nums ${
+                    estimatedFileSize === "—" || estimatedFileSize === "Awaiting crop…"
+                      ? "text-ff-foreground-muted"
+                      : estimatedFileSize === "Estimating…"
+                      ? "text-ff-warning animate-pulse"
+                      : "text-ff-success"
+                  }`}
+                >
+                  {estimatedFileSize === "Estimating…"
+                    ? "Estimating…"
+                    : estimatedFileSize === "Awaiting crop…"
+                    ? "Awaiting crop…"
+                    : estimatedFileSize === "—"
+                    ? "—"
+                    : `~${estimatedFileSize.replace("≈", "").trim()}`}
+                </span>
+                {showInfoPopover && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-10"
+                      onClick={() => setShowInfoPopover(false)}
+                      aria-hidden="true"
+                    />
+                    <div
+                      role="dialog"
+                      aria-modal="true"
+                      aria-labelledby="bio-size-info-title"
+                      className="absolute bottom-full left-0 right-0 z-20 mb-2 rounded-ff-md border border-ff-border bg-ff-surface p-ff-4 shadow-ff-md"
+                    >
+                      <div className="flex items-start justify-between gap-3 mb-2">
+                        <h4 id="bio-size-info-title" className="text-sm font-semibold text-ff-foreground leading-snug">
+                          Why isn&apos;t it the exact size?
+                        </h4>
+                        <button
+                          type="button"
+                          aria-label="Close"
+                          onClick={() => setShowInfoPopover(false)}
+                          className="cursor-pointer shrink-0 text-ff-foreground-muted hover:text-ff-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 rounded-full"
+                        >
+                          <span className="text-lg leading-none">&times;</span>
+                        </button>
+                      </div>
+                      <p className="text-xs leading-relaxed text-ff-foreground-muted">
+                        Images shrink in steps, not exact numbers. We automatically pick the
+                        highest quality that stays safely under your limit so the visa or passport
+                        portal never rejects it.
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
+          )}
 
-            <input
-              type="range"
-              min={minKb}
-              max={maxKb}
-              step={1}
-              value={displayTargetKb}
-              onChange={(e) => {
-                const v = Math.round(Number(e.target.value));
-                setDisplayTargetKb(v);
-                setTargetKb(v);
-              }}
-              disabled={!completedCrop}
-              className="w-full disabled:opacity-30 accent-brand-500"
-            />
-          </div>
+          {/* ─── Process & Compress — hidden for live-capture specs ─── */}
+          {!isLiveCapture && (
+            <div className="space-y-3">
+              <button
+                type="button"
+                onClick={handleProcess}
+                disabled={!completedCrop || processing}
+                className="group/btn flex w-full items-center justify-center gap-2 rounded-ff-md bg-brand-500 hover:bg-brand-600 text-white py-3 text-sm font-semibold shadow-ff-sm transition-all duration-[180ms] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {processing ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Download className="h-4 w-4 transition-transform group-hover/btn:-translate-y-0.5" />
+                )}
+                {processing ? "Processing…" : "Process & Compress"}
+                <span className="text-[11px] font-normal opacity-70">
+                  {pixelWidth}×{pixelHeight}
+                </span>
+              </button>
+            </div>
+          )}
 
-          {/* ─── Export Actions ─────────────────────────────── */}
-          <div className="space-y-3">
-            {/* Digital Submission */}
-            <button
-              type="button"
-              onClick={exportDigital}
-              disabled={!completedCrop || processing}
-              className="group/btn flex w-full items-center justify-center gap-2 rounded-ff-md bg-brand-500 hover:bg-brand-600 text-white py-3 text-sm font-semibold shadow-ff-sm transition-all duration-[180ms] disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              {processing ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
+          {/* ─── Pre-Flight Check + Downloads — hidden for live-capture specs ── */}
+          {!isLiveCapture && digitalUrl && finalFileSize !== null && (
+            <div className="space-y-3">
+              {/* Pre-Flight Check card */}
+              <div className="rounded-lg bg-ff-success-light p-4 border border-ff-success/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <CheckCircle2 className="w-5 h-5 text-ff-success-dark" />
+                  <h4 className="font-bold text-ff-success-dark">Pre-Flight Check</h4>
+                </div>
+                <div className="flex flex-col gap-2 ml-7">
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-ff-success mt-0.5" />
+                    <div className="text-sm">
+                      <p className="font-semibold text-ff-foreground">Biometrics Locked:</p>
+                      <p className="text-ff-foreground-muted font-mono">{pixelWidth} × {pixelHeight} px</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-ff-success mt-0.5" />
+                    <div className="text-sm">
+                      <p className="font-semibold text-ff-foreground">File Size Passed:</p>
+                      <p className="text-ff-foreground-muted font-mono">
+                        {finalFileSize} KB <span className="text-ff-success-dark">({minKb}–{maxKb} KB)</span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Digital Submission download */}
+              <a
+                href={digitalUrl}
+                download={`${config.id}_digital_${pixelWidth}x${pixelHeight}.jpg`}
+                className="group/btn flex w-full items-center justify-center gap-2 rounded-ff-md bg-brand-500 hover:bg-brand-600 text-white py-3 text-sm font-semibold shadow-ff-sm transition-all duration-[180ms]"
+              >
                 <Download className="h-4 w-4 transition-transform group-hover/btn:-translate-y-0.5" />
-              )}
-              Digital Submission
-              <span className="text-[11px] font-normal opacity-70">
-                {pixelWidth}×{pixelHeight}
-              </span>
-            </button>
+                Download Digital
+                <span className="text-[11px] font-normal opacity-70">{pixelWidth}×{pixelHeight}</span>
+              </a>
 
-            {/* Print-Ready Sheet */}
-            <button
-              type="button"
-              onClick={exportPrintSheet}
-              disabled={!completedCrop || processing}
-              className="group/btn flex w-full items-center justify-center gap-2 rounded-ff-md border border-ff-border bg-ff-surface hover:bg-ff-surface-subtle py-3 text-sm font-semibold text-ff-foreground-secondary shadow-ff-sm transition-all duration-[180ms] hover:text-ff-foreground disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              {processing ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Printer className="h-4 w-4 transition-transform group-hover/btn:-translate-y-0.5" />
+              {/* Print-Ready Sheet download */}
+              {printUrl && (
+                <a
+                  href={printUrl}
+                  download={`${config.id}_print_sheet_4x6.jpg`}
+                  className="group/btn flex w-full items-center justify-center gap-2 rounded-ff-md border border-ff-border bg-ff-surface hover:bg-ff-surface-subtle py-3 text-sm font-semibold text-ff-foreground-secondary shadow-ff-sm transition-all duration-[180ms] hover:text-ff-foreground"
+                >
+                  <Printer className="h-4 w-4 transition-transform group-hover/btn:-translate-y-0.5" />
+                  Download Print Sheet
+                  <span className="text-[11px] font-normal opacity-60">4×6</span>
+                </a>
               )}
-              Print-Ready Sheet
-              <span className="text-[11px] font-normal opacity-60">4×6</span>
-            </button>
-          </div>
+            </div>
+          )}
 
         </div>
       </div>
+      <FeedbackModal
+        isOpen={isFeedbackOpen}
+        onClose={() => setIsFeedbackOpen(false)}
+        title="Report a Specification Change"
+        description="Has something changed in the official requirements? Let us know and we'll update the spec."
+      />
     </div>
   );
 }

@@ -14,6 +14,7 @@ export const delhi_police_constableConfig: FormatConfig = {
       height: 0,
       minKb: 10,
       maxKb: 50,
+      isLiveCapture: true,
     stampRequired: false,
       rules: {
         allowedFormats: ['Live Photo'],

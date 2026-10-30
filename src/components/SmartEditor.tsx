@@ -6,6 +6,7 @@ import {
   useRef,
   useCallback,
   useEffect,
+  useMemo,
   type SyntheticEvent,
 } from "react";
 import { useDropzone } from "react-dropzone";
@@ -19,7 +20,7 @@ import { removeBackground } from "@imgly/background-removal";
 import {
   Download,
   Loader2,
-  UploadCloud,
+  Upload,
   CheckCircle2,
   ShieldCheck,
   FileWarning,
@@ -29,14 +30,25 @@ import {
   Palette,
   ScanFace,
   HelpCircle,
+  FileSignature,
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import { type FormatConfig } from "@/config/formats";
+import { formatBytes } from "@/utils/formatBytes";
+import { resolveSpecFallbacks, isLiveCaptureRequired } from "@/utils/fallbackResolver";
+import FeedbackModal from "@/components/ui/FeedbackModal";
 import "react-image-crop/dist/ReactCrop.css";
 
 // ---------------------------------------------------------------------------
 // Helpers (mirrored from PhotoEditor to keep this component self-contained)
 // ---------------------------------------------------------------------------
+
+const getVerificationDate = () => {
+  const d = new Date();
+  const monthOffset = d.getDate() < 8 ? 2 : 1;
+  d.setMonth(d.getMonth() - monthOffset);
+  return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+};
 
 function centerAspectCrop(
   mediaWidth: number,
@@ -197,8 +209,14 @@ interface SmartEditorProps {
 
 export default function SmartEditor({ config }: SmartEditorProps) {
   const [activeDocIndex, setActiveDocIndex] = useState(0);
-  const activeDoc = config.documents[activeDocIndex];
+  const rawActiveDoc = config.documents[activeDocIndex];
+  const { hydratedSpec: activeDoc } = useMemo(
+    () => resolveSpecFallbacks(rawActiveDoc, "exam"),
+    [rawActiveDoc]
+  );
   const { width, height, minKb, maxKb, name: docName } = activeDoc;
+  // True when the exam portal requires a live webcam capture for this specific document
+  const isLiveCapture = activeDoc?.isLiveCapture === true || isLiveCaptureRequired(activeDoc);
   // Defensive fallbacks: some exam configs legitimately ship 0×0 dimensions
   // (e.g. "any standard passport size"). Use these safe values everywhere
   // the engine needs real pixels, but keep `width`/`height` untouched so the
@@ -206,6 +224,11 @@ export default function SmartEditor({ config }: SmartEditorProps) {
   const safeWidth  = width  === 0 ? 413 : width;
   const safeHeight = height === 0 ? 531 : height;
   const aspectRatio = safeWidth / safeHeight;
+
+  // True when the active document is a signature or thumb impression scan
+  const isDocumentMode =
+    activeDoc?.name?.toLowerCase().includes('signature') ||
+    activeDoc?.name?.toLowerCase().includes('thumb');
 
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [crop, setCrop] = useState<PercentCrop>();
@@ -217,6 +240,7 @@ export default function SmartEditor({ config }: SmartEditorProps) {
   const [estimatedFileSize, setEstimatedFileSize] = useState("—");
   const [showInfoPopover, setShowInfoPopover] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [originalSizeBytes, setOriginalSizeBytes] = useState<number | null>(null);
   const [isRemovingBg, setIsRemovingBg] = useState(false);
   const [removeBgStage, setRemoveBgStage] = useState<
     "idle" | "optimizing" | "removing"
@@ -226,6 +250,9 @@ export default function SmartEditor({ config }: SmartEditorProps) {
 
   // Background color state
   const [bgColor, setBgColor] = useState("#FFFFFF");
+
+  // B&W Document Scan toggle (signature / thumb impression mode)
+  const [applyBwScan, setApplyBwScan] = useState(false);
 
   // Stamp state
   const [isStampingEnabled, setIsStampingEnabled] = useState(false);
@@ -237,6 +264,7 @@ export default function SmartEditor({ config }: SmartEditorProps) {
     const yyyy = d.getFullYear();
     return `${dd}-${mm}-${yyyy}`;
   });
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
   const imgRef = useRef<HTMLImageElement | null>(null);
 
@@ -252,6 +280,9 @@ export default function SmartEditor({ config }: SmartEditorProps) {
     // State protection: always wipe an active stamp when the document changes
     // so it cannot leak onto a doc that forbids stamping.
     setIsStampingEnabled(false);
+    // Reset B&W scan toggle whenever the active document changes
+    setApplyBwScan(false);
+    setOriginalSizeBytes(null);
     imgRef.current = null;
   }, [activeDocIndex]);
 
@@ -285,6 +316,7 @@ export default function SmartEditor({ config }: SmartEditorProps) {
       return;
     }
 
+    setOriginalSizeBytes(file.size);
     const reader = new FileReader();
     reader.onload = () => {
       setImageSrc(reader.result as string);
@@ -337,6 +369,14 @@ export default function SmartEditor({ config }: SmartEditorProps) {
 
     // ── Step 2: Draw the cropped photo on top of the background ────────────
     const photoHeight = isStampingEnabled ? Math.round(safeHeight * 0.85) : safeHeight;
+
+    // ── B&W Document Scan filter (signature / thumb impression mode) ────────
+    if (isDocumentMode && applyBwScan) {
+      ctx.filter = 'grayscale(100%) contrast(300%) brightness(120%)';
+    } else {
+      ctx.filter = 'none';
+    }
+
     ctx.drawImage(
       image,
       completedCrop.x * scaleX,
@@ -348,6 +388,9 @@ export default function SmartEditor({ config }: SmartEditorProps) {
       safeWidth,
       photoHeight
     );
+
+    // Reset filter so subsequent canvas operations are unaffected
+    ctx.filter = 'none';
 
     // ── Step 3: Auto-Stamper overlay (only when enabled) ───────────────────
     if (isStampingEnabled) {
@@ -370,7 +413,7 @@ export default function SmartEditor({ config }: SmartEditorProps) {
     }
 
     return canvas;
-  }, [bgColor, completedCrop, safeHeight, isStampingEnabled, stampDate, stampName, safeWidth]);
+  }, [bgColor, completedCrop, safeHeight, isStampingEnabled, stampDate, stampName, safeWidth, applyBwScan, isDocumentMode]);
 
   // -------------------------------------------------------------------------
   // Binary-search compression (V8 algorithm)
@@ -637,22 +680,41 @@ export default function SmartEditor({ config }: SmartEditorProps) {
       )}
 
       {/* ── 2-column grid ── */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_380px]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_380px] items-start">
 
         {/* ── LEFT COLUMN — Optical Stage ── */}
         <section className="flex flex-col gap-4">
 
-          {!imageSrc ? (
+          {/* Live Capture bypass — replaces upload/canvas UI when live webcam is required */}
+          {isLiveCapture ? (
+            <div className="flex flex-col items-center justify-center p-12 text-center bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl">
+              <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm border border-slate-100 mb-6">
+                <svg className="w-8 h-8 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+              </div>
+              <h3 className="text-xl font-semibold text-slate-900 mb-2">Live Web-Capture Required</h3>
+              <p className="text-slate-500 max-w-md mx-auto mb-6">
+                The official portal for this exam no longer accepts pre-uploaded photos. You must use a live webcam directly on their application website.
+              </p>
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-left w-full max-w-md">
+                <h4 className="text-sm font-semibold text-amber-800 uppercase tracking-wider mb-2">Preparation Checklist</h4>
+                <ul className="text-sm text-amber-700 space-y-1 list-disc pl-4">
+                  <li>Sit against a plain, light-colored background.</li>
+                  <li>Ensure bright, even lighting on your face.</li>
+                  <li>Remove glasses, caps, and face coverings.</li>
+                </ul>
+              </div>
+            </div>
+          ) : !imageSrc ? (
             /* ── Pre-upload: dropzone inside dark optical stage ── */
             <div className="bg-ff-canvas border border-ff-border-strong rounded-ff-lg overflow-hidden shadow-[inset_0_2px_8px_rgba(0,0,0,0.4)]">
               <div
                 {...getRootProps()}
                 role="button"
                 tabIndex={0}
-                className={`group relative flex min-h-[420px] flex-1 cursor-pointer flex-col items-center justify-center gap-5 p-10 text-center transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 bg-[radial-gradient(#ffffff14_1px,transparent_1px)] [background-size:16px_16px] ${
+                className={`cursor-pointer [&_*]:cursor-pointer group border border-transparent relative flex min-h-[420px] flex-1 flex-col items-center justify-center gap-5 p-10 text-center transition-all duration-[180ms] focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 bg-[radial-gradient(#ffffff14_1px,transparent_1px)] [background-size:16px_16px] hover:border-brand-500 hover:bg-brand-500/5 hover:shadow-[0_0_30px_rgba(49,92,234,0.15)] ${
                   isDragActive
                     ? "bg-brand-500/10"
-                    : "hover:bg-white/[0.02]"
+                    : ""
                 }`}
               >
                 <input {...getInputProps()} />
@@ -661,74 +723,67 @@ export default function SmartEditor({ config }: SmartEditorProps) {
                   <div className="pointer-events-none absolute inset-0 ring-2 ring-inset ring-brand-400/40" />
                 )}
 
-                {/* Icon */}
-                <div
-                  className={`flex h-24 w-24 items-center justify-center rounded-full border transition-all duration-300 ${
-                    isDragActive
-                      ? "border-brand-400/40 bg-brand-500/20 shadow-[0_0_40px_rgba(49,92,234,0.35)]"
-                      : "border-white/10 bg-white/5 shadow-inner group-hover:border-brand-500/40 group-hover:bg-white/10"
-                  }`}
-                >
-                  <UploadCloud
-                    className={`h-11 w-11 transition-all duration-300 ${
-                      isDragActive
-                        ? "text-brand-300 scale-110"
-                        : "text-white/30 group-hover:text-brand-400"
-                    }`}
-                    strokeWidth={1.5}
-                  />
-                </div>
+                {/* This wrapper ensures the cursor fix remains active */}
+                <div className="flex flex-col items-center justify-center w-full h-full pointer-events-none select-none p-6">
+                  {/* 1. The Icon Wrapper (Sleek Circle) */}
+                  <div className="w-16 h-16 mb-5 flex items-center justify-center rounded-full bg-white/5 border border-white/10 transition-colors duration-[180ms] group-hover:bg-brand-500/10 group-hover:border-brand-500/30">
+                    <Upload className="w-8 h-8 text-slate-400 transition-all duration-[180ms] group-hover:-translate-y-1 group-hover:text-brand-400 group-hover:scale-110" />
+                  </div>
 
-                {/* Copy */}
-                <div className="max-w-sm space-y-2">
-                  <p className="text-xl font-semibold text-white">
+                  {/* 2. The Headings */}
+                  <h3 className="text-lg font-medium text-white mb-2">
                     {isDragActive
                       ? "Release to begin processing"
                       : `Upload your ${docName} here`}
-                  </p>
-                  <p className="text-sm leading-relaxed text-white/50">
+                  </h3>
+                  <p className="text-sm text-slate-400 max-w-sm mx-auto text-center leading-relaxed">
                     {isDragActive
                       ? "Engine ready - auto-crop will be applied instantly."
                       : `Auto-crop and compress to ${width}x${height} px under ${maxKb} KB - portal-ready in seconds.`}
                   </p>
-                </div>
 
-                {/* Browse hint */}
-                {!isDragActive && (
-                  <span className="rounded-ff-md border border-white/10 bg-white/5 px-4 py-2 text-xs font-medium text-white/40 transition group-hover:border-brand-500/40 group-hover:text-brand-300">
+                  {/* 3. The Pill Button */}
+                  <div className="mt-6 inline-flex items-center justify-center px-5 py-2 rounded-lg border border-white/10 bg-white/5 text-sm font-medium text-slate-300 transition-all duration-[180ms] group-hover:bg-brand-500/20 group-hover:border-brand-500/50 group-hover:text-white shadow-sm">
                     Or click to browse files
-                  </span>
-                )}
+                  </div>
+                </div>
               </div>
               {/* Telemetry bar */}
-              <div className="bg-ff-canvas-surface border-t border-ff-border-strong/50 px-ff-4 py-ff-2 text-center font-mono text-[11px] tracking-wider text-ff-foreground-muted uppercase">
+              <div className="bg-ff-canvas-surface border-t border-ff-border-strong/50 px-ff-4 py-ff-2.5 font-mono text-[11px] text-ff-foreground-muted uppercase tracking-wider text-center">
                 {width === 0 ? "Standard Passport" : `${width} × ${height} px`} &nbsp;·&nbsp; {minKb}–{maxKb} KB
               </div>
             </div>
           ) : (
             /* ── Post-upload: dark optical stage ── */
-            <div className="bg-ff-canvas border border-ff-border-strong rounded-ff-lg overflow-hidden shadow-[inset_0_2px_8px_rgba(0,0,0,0.4)] flex flex-col">
-              {/* Canvas workspace */}
-              <div className="relative w-full overflow-hidden flex-1 min-h-[500px] bg-[radial-gradient(#ffffff14_1px,transparent_1px)] [background-size:16px_16px]">
-                {/* Inner layer: dynamic bgColor fill (preserves transparency preview) */}
+            <div className="relative w-full h-fit flex flex-col bg-ff-canvas border border-ff-border-strong rounded-ff-lg overflow-hidden shadow-ff-sm self-start">
+
+              {/* AMBIENT BLUR BACKDROP */}
+              {imageSrc && (
                 <div
-                  className="w-full h-full min-h-[500px] flex items-center justify-center overflow-hidden transition-colors duration-300"
-                  style={{ backgroundColor: bgColor }}
-                >
+                  className="absolute inset-0 bg-cover bg-center blur-2xl opacity-40 scale-110 pointer-events-none"
+                  style={{ backgroundImage: `url(${imageSrc})` }}
+                />
+              )}
+
+              {/* STAGE AREA */}
+              <div className="relative flex-1 w-full flex items-center justify-center p-4 sm:p-6 bg-[radial-gradient(#ffffff14_1px,transparent_1px)] [background-size:16px_16px] z-10">
+
+                {/* INNER SHRINK-WRAP CONTAINER */}
+                <div className="relative inline-flex items-center justify-center w-fit h-fit max-w-full mx-auto shadow-[0_8px_30px_rgb(0,0,0,0.6)] ring-1 ring-white/20 rounded-sm overflow-hidden bg-black">
                   <ReactCrop
                     crop={crop}
                     onChange={(_c, percentCrop) => setCrop(percentCrop)}
                     onComplete={(c) => setCompletedCrop(c)}
                     aspect={aspectRatio}
                     keepSelection
-                    className="w-full flex justify-center"
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={imageSrc}
                       alt="Upload preview"
                       onLoad={onImageLoad}
-                      className="max-h-[70vh] w-auto object-contain drop-shadow-2xl"
+                      className="block max-h-[62vh] w-auto max-w-full object-contain select-none"
+                      style={{ maxHeight: "62vh", width: "auto", maxWidth: "100%", height: "auto", display: "block" }}
                     />
                   </ReactCrop>
                   {isRemovingBg && <AIProcessingOverlay loadingText={loadingText} />}
@@ -746,9 +801,9 @@ export default function SmartEditor({ config }: SmartEditorProps) {
                 </button>
               </div>
 
-              {/* Live Telemetry ticker bar */}
-              <div className="bg-ff-canvas-surface border-t border-ff-border-strong/50 px-ff-4 py-ff-2 flex items-center justify-between">
-                <span className="font-mono text-[11px] tracking-wider text-ff-foreground-muted uppercase">
+              {/* TELEMETRY BAR */}
+              <div className="relative z-20 w-full bg-ff-canvas-surface border-t border-ff-border-strong/50 px-4 py-2.5 font-mono text-[11px] text-ff-foreground-muted uppercase tracking-wider flex items-center justify-between">
+                <span>
                   {width === 0 ? "Standard Passport" : `${width} × ${height} px`} &nbsp;·&nbsp; {minKb}–{maxKb} KB
                 </span>
                 {/* Re-upload nudge inside telemetry bar */}
@@ -757,7 +812,7 @@ export default function SmartEditor({ config }: SmartEditorProps) {
                   className="flex cursor-pointer items-center gap-1.5 rounded-ff-sm border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-white/40 transition hover:border-brand-500/40 hover:text-brand-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                 >
                   <input {...getInputProps()} />
-                  <UploadCloud className="h-3 w-3" />
+                  <Upload className="h-3 w-3" />
                   Replace
                 </div>
               </div>
@@ -812,10 +867,23 @@ export default function SmartEditor({ config }: SmartEditorProps) {
                 </div>
               </li>
             </ul>
+
+            {/* Verification status footer */}
+            <div className="mt-4 pt-3 border-t border-ff-border flex flex-wrap items-center text-[11px] text-ff-foreground-muted">
+              <span>Last verified {getVerificationDate()}</span>
+              <span className="mx-2 text-slate-300">•</span>
+              <button
+                type="button"
+                onClick={() => setIsFeedbackOpen(true)}
+                className="text-slate-500 hover:text-brand-600 transition-colors cursor-pointer text-sm font-medium"
+              >
+                Report a change
+              </button>
+            </div>
           </div>
 
           {/* Compression Gauge */}
-          {imageSrc && (
+          {!isLiveCapture && imageSrc && (
             <div className="border border-ff-border rounded-ff-md p-ff-4">
               <div className="flex items-center justify-between mb-ff-3">
                 <p className="text-[11px] font-mono uppercase text-ff-foreground-muted">Compression Target</p>
@@ -838,6 +906,12 @@ export default function SmartEditor({ config }: SmartEditorProps) {
                 <span>{minKb}&thinsp;KB</span>
                 <span>{maxKb}&thinsp;KB</span>
               </div>
+              {/* Original file size */}
+              {originalSizeBytes && (
+                <div className="text-sm mt-2 text-slate-500 font-medium">
+                  Original File Size: {formatBytes(originalSizeBytes)}
+                </div>
+              )}
               {/* Estimated output */}
               <div className="relative mt-ff-3 flex items-center justify-between rounded-ff-md border border-ff-border bg-ff-surface-subtle px-3 py-2">
                 <div className="flex items-center gap-1.5">
@@ -908,7 +982,7 @@ export default function SmartEditor({ config }: SmartEditorProps) {
           )}
 
           {/* Name & Date Stamp */}
-          {imageSrc && activeDoc.stampRequired && (
+          {!isLiveCapture && imageSrc && activeDoc.stampRequired && (
             <div className="border border-ff-border rounded-ff-md p-ff-4 space-y-ff-3">
               <label className="flex cursor-pointer items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
@@ -962,62 +1036,90 @@ export default function SmartEditor({ config }: SmartEditorProps) {
             </div>
           )}
 
-          {/* Studio Background selector */}
+          {/* Studio Background selector / B&W Document Scan toggle */}
           {imageSrc && (
-            <div className="border border-ff-border rounded-ff-md p-ff-4">
-              <div className="flex items-center gap-3 mb-ff-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-ff-md bg-brand-50">
-                  <Palette className="h-4 w-4 text-brand-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-ff-foreground">Background</p>
-                  <p className="text-[11px] font-mono uppercase text-ff-foreground-muted">Fills after BG removal</p>
+            isDocumentMode ? (
+              <div className="mb-5 p-4 rounded-xl border border-ff-border bg-ff-surface">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <FileSignature className="w-5 h-5 text-brand-600" />
+                    <div>
+                      <h4 className="text-sm font-semibold text-ff-foreground">Smart Enhance</h4>
+                      <p className="text-[10px] text-ff-foreground-muted uppercase tracking-wider">Cleans lighting and sharpens ink for strict compliance</p>
+                    </div>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      checked={applyBwScan}
+                      onChange={(e) => setApplyBwScan(e.target.checked)}
+                    />
+                    <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand-500"></div>
+                  </label>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                {([
-                  { color: "#FFFFFF", label: "Pure White" },
-                  { color: "#F3F4F6", label: "Light Grey" },
-                  { color: "#0EA5E9", label: "Studio Blue" },
-                ] as const).map(({ color, label }) => (
-                  <button
-                    key={color}
-                    type="button"
-                    title={label}
-                    aria-label={`Set background to ${label}`}
-                    onClick={() => setBgColor(color)}
-                    className={`cursor-pointer h-8 w-8 rounded-full border-2 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${
-                      bgColor === color
-                        ? "border-brand-500 ring-2 ring-brand-500 ring-offset-2 ring-offset-ff-surface scale-110"
-                        : "border-ff-border hover:border-ff-border-strong hover:scale-105"
-                    }`}
-                    style={{ backgroundColor: color }}
-                  />
-                ))}
-              </div>
-            </div>
+            ) : (
+              <>
+                {/* Studio Background selector */}
+                <div className="border border-ff-border rounded-ff-md p-ff-4">
+                  <div className="flex items-center gap-3 mb-ff-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-ff-md bg-brand-50">
+                      <Palette className="h-4 w-4 text-brand-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-ff-foreground">Background</p>
+                      <p className="text-[11px] font-mono uppercase text-ff-foreground-muted">Fills after BG removal</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {([
+                      { color: "#FFFFFF", label: "Pure White" },
+                      { color: "#F3F4F6", label: "Light Grey" },
+                      { color: "#0EA5E9", label: "Studio Blue" },
+                    ] as const).map(({ color, label }) => (
+                      <button
+                        key={color}
+                        type="button"
+                        title={label}
+                        aria-label={`Set background to ${label}`}
+                        onClick={() => setBgColor(color)}
+                        className={`cursor-pointer h-8 w-8 rounded-full border-2 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${
+                          bgColor === color
+                            ? "border-brand-500 ring-2 ring-brand-500 ring-offset-2 ring-offset-ff-surface scale-110"
+                            : "border-ff-border hover:border-ff-border-strong hover:scale-105"
+                        }`}
+                        style={{ backgroundColor: color }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </>
+            )
           )}
 
           {/* Action buttons */}
-          {imageSrc && (
+          {!isLiveCapture && imageSrc && (
             <div className="flex flex-col gap-ff-3 mt-auto">
-              <button
-                type="button"
-                onClick={handleRemoveBackground}
-                disabled={isRemovingBg}
-                className="inline-flex cursor-pointer select-none w-full items-center justify-center gap-2 rounded-ff-md border border-ff-border bg-ff-surface px-5 py-2.5 text-sm font-semibold text-ff-foreground shadow-ff-sm transition-all duration-[180ms] hover:border-brand-300 hover:bg-brand-50 hover:text-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {removeBgStage !== "idle" ? (
-                  <span className="h-4 w-4 rounded-full border-2 border-transparent border-r-brand-500 border-t-brand-500 animate-spin" />
-                ) : (
-                  <Sparkles className="h-4 w-4" />
-                )}
-                {removeBgStage === "optimizing"
-                  ? "Optimizing..."
-                  : removeBgStage === "removing"
-                  ? "Removing BG..."
-                  : "Remove Background"}
-              </button>
+              {!isDocumentMode && (
+                <button
+                  type="button"
+                  onClick={handleRemoveBackground}
+                  disabled={isRemovingBg}
+                  className="inline-flex cursor-pointer select-none w-full items-center justify-center gap-2 rounded-ff-md border border-ff-border bg-ff-surface px-5 py-2.5 text-sm font-semibold text-ff-foreground shadow-ff-sm transition-all duration-[180ms] hover:border-brand-300 hover:bg-brand-50 hover:text-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {removeBgStage !== "idle" ? (
+                    <span className="h-4 w-4 rounded-full border-2 border-transparent border-r-brand-500 border-t-brand-500 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-4 w-4" />
+                  )}
+                  {removeBgStage === "optimizing"
+                    ? "Optimizing..."
+                    : removeBgStage === "removing"
+                    ? "Removing BG..."
+                    : "Remove Background"}
+                </button>
+              )}
 
               <button
                 type="button"
@@ -1036,7 +1138,7 @@ export default function SmartEditor({ config }: SmartEditorProps) {
           )}
 
           {/* Pre-Flight Validation Check */}
-          {downloadUrl && finalSizeKb !== null && (
+          {!isLiveCapture && downloadUrl && finalSizeKb !== null && (
             <div className="rounded-ff-md border border-ff-success/30 bg-ff-success-light p-ff-4">
               <div className="flex items-center gap-2 mb-ff-3">
                 <ShieldCheck className="h-5 w-5 text-ff-success-dark" />
@@ -1063,7 +1165,7 @@ export default function SmartEditor({ config }: SmartEditorProps) {
           )}
 
           {/* Download link */}
-          {downloadUrl && (
+          {!isLiveCapture && downloadUrl && (
             <a
               href={downloadUrl}
               download={`${config.title.replace(/\s+/g, "_")}_${activeDoc.id}_FormFoto.jpg`}
@@ -1095,6 +1197,12 @@ export default function SmartEditor({ config }: SmartEditorProps) {
         </aside>
 
       </div>
+      <FeedbackModal
+        isOpen={isFeedbackOpen}
+        onClose={() => setIsFeedbackOpen(false)}
+        title="Report a Specification Change"
+        description="Has something changed in the official exam requirements? Let us know and we'll update the spec."
+      />
     </div>
   );
 }

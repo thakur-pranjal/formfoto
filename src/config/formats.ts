@@ -7,6 +7,12 @@ export interface FormatDocument {
   maxKb: number;
   /** When true, the Add-Stamp UI panel is shown and the canvas stamper is active. */
   stampRequired?: boolean;
+  /**
+   * When true, the exam portal requires a live webcam capture for this document
+   * and does not accept pre-uploaded files. SmartEditor replaces its upload/canvas
+   * UI with the LiveCapture instructional block for this document.
+   */
+  isLiveCapture?: boolean;
   rules?: Record<string, any>; // Dynamically captures compliance metadata (bg, ink, stamp, etc.)
 }
 

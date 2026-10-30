@@ -14,6 +14,7 @@ export const ssc_gdConfig: FormatConfig = {
       height: 0,
       minKb: 10,
       maxKb: 50,
+      isLiveCapture: true,
       stampRequired: false,
       rules: {
         captureMethod: 'Captured directly via live photo module (webcam/mobile application)',

@@ -10,6 +10,7 @@ export interface ExamPreset {
   aspectRatio: number;
   description: string;
   supportsDate?: boolean;
+  isLiveCapture?: boolean;
   sigWidth?: number;
   sigHeight?: number;
   sigMinKB?: number;
@@ -45,6 +46,7 @@ export const EXAM_PRESETS: ExamPreset[] = [
     aspectRatio: 413 / 531,
     description: '3.5cm x 4.5cm, 20-50KB.',
     supportsDate: true,
+    isLiveCapture: true,
     sigWidth: 550,
     sigHeight: 250,
     sigMinKB: 10,

@@ -1,10 +1,19 @@
 "use client";
 
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
-import { Search, SlidersHorizontal, X, Check } from "lucide-react";
+import Link from "next/link";
+import {
+  SearchX,
+  Settings2,
+  MessageSquarePlus,
+  SlidersHorizontal,
+  X,
+  Check,
+} from "lucide-react";
 import { examStandards as FORMATS } from "@/config/exams";
 import DirectoryHeader from "@/components/directory/DirectoryHeader";
 import ExamStandardCard from "@/components/directory/ExamStandardCard";
+import FeedbackModal from "@/components/ui/FeedbackModal";
 
 // ---------------------------------------------------------------------------
 // Filter Definitions & Enrichment
@@ -207,7 +216,7 @@ const ALL_EXAMS: Exam[] = (
   });
 
 // ---------------------------------------------------------------------------
-// Sub-components: Filter Chip, Filter Modal, Empty State
+// Sub-components: Filter Chip, Filter Modal
 // ---------------------------------------------------------------------------
 
 function FilterChip({
@@ -375,56 +384,7 @@ function FilterModal({
   );
 }
 
-function EmptyState({
-  query,
-  onReset,
-}: {
-  query: string;
-  onReset?: () => void;
-}) {
-  return (
-    <div
-      className={[
-        "rounded-ff-lg border border-ff-border bg-ff-surface-subtle",
-        "py-16 text-center",
-      ].join(" ")}
-    >
-      <Search
-        aria-hidden="true"
-        className="mx-auto mb-3 h-8 w-8 text-ff-foreground-muted opacity-50"
-      />
-      <p
-        className="font-medium text-ff-foreground"
-        style={{ fontSize: "var(--ff-text-body-size)" }}
-      >
-        No exams found
-      </p>
-      {query && (
-        <p
-          className="mt-1 text-ff-foreground-secondary"
-          style={{ fontSize: "var(--ff-text-small-size)" }}
-        >
-          No results for &ldquo;{query}&rdquo;
-        </p>
-      )}
-      <p
-        className="mt-2 text-ff-foreground-muted"
-        style={{ fontSize: "var(--ff-text-small-size)" }}
-      >
-        Try adjusting your filters or search term.
-      </p>
-      {onReset && (
-        <button
-          type="button"
-          onClick={onReset}
-          className="mt-4 inline-flex items-center rounded-ff-md border border-ff-border bg-ff-surface px-4 py-2 text-xs font-semibold text-brand-600 shadow-ff-sm hover:border-brand-300 hover:bg-ff-surface-subtle transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[var(--ff-focus-color)]"
-        >
-          Reset filters & search
-        </button>
-      )}
-    </div>
-  );
-}
+
 
 // ---------------------------------------------------------------------------
 // Main Page
@@ -441,6 +401,7 @@ export default function ExamPage() {
   const [activeFilters, setActiveFilters] =
     useState<Record<FilterGroup, string[]>>(INITIAL_FILTERS);
   const [filterOpen, setFilterOpen] = useState(false);
+  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
 
   // ── Derived ──────────────────────────────────────────────────────────────────
 
@@ -625,9 +586,38 @@ export default function ExamPage() {
             </div>
           )}
 
-          {/* ── Empty state ── */}
+          {/* ── Empty state conversion card ── */}
           {filteredExams.length === 0 && (
-            <EmptyState query={searchQuery} onReset={clearAllFilters} />
+            <div className="bg-slate-50/50 border-2 border-dashed border-slate-200 rounded-2xl p-10 text-center">
+              <div className="w-14 h-14 mx-auto bg-white rounded-full flex items-center justify-center shadow-sm border border-slate-100 mb-5 text-slate-400">
+                <SearchX className="w-7 h-7" aria-hidden="true" />
+              </div>
+              <h3 className="text-xl font-semibold text-slate-900 mb-2">
+                {searchQuery.trim()
+                  ? `No specifications found for "${searchQuery.trim()}"`
+                  : "We couldn't find that specification"}
+              </h3>
+              <p className="text-slate-500 max-w-sm mx-auto mb-6 text-sm leading-relaxed">
+                We are constantly adding official government photo & signature specifications. In a rush? You can manually customize dimensions, or request this exam to have it added.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 w-full justify-center">
+                <button
+                  type="button"
+                  onClick={() => setIsFeedbackModalOpen(true)}
+                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-brand-600 text-white text-sm font-semibold rounded-xl hover:bg-brand-700 active:bg-brand-800 transition-colors shadow-ff-sm outline-none focus-visible:ring-2 focus-visible:ring-[var(--ff-focus-color)] focus-visible:ring-offset-2"
+                >
+                  <MessageSquarePlus className="w-4 h-4" />
+                  Request this Exam
+                </button>
+                <Link
+                  href="/manual"
+                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-ff-surface text-ff-foreground text-sm font-semibold rounded-xl border border-ff-border hover:bg-ff-surface-subtle transition-colors shadow-ff-sm outline-none focus-visible:ring-2 focus-visible:ring-[var(--ff-focus-color)]"
+                >
+                  <Settings2 className="w-4 h-4" />
+                  Open Pro Manual Editor
+                </Link>
+              </div>
+            </div>
           )}
 
           {/* ── Popular Exams ── */}
@@ -695,6 +685,14 @@ export default function ExamPage() {
           )}
         </div>
       </main>
+
+      <FeedbackModal
+        isOpen={isFeedbackModalOpen}
+        onClose={() => setIsFeedbackModalOpen(false)}
+        title="Request an Exam Specification"
+        description="Can't find the exact exam or government recruitment format? Let us know which one you need and we'll add official verified dimensions."
+        defaultText={searchQuery.trim() ? `Exam request: ${searchQuery.trim()}` : ""}
+      />
     </>
   );
 }

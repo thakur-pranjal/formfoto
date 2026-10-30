@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { EXAM_PRESETS, ExamPreset } from "@/lib/exam-presets";
 import { type VisaPassportConfig } from "@/config/visas/types";
+import { formatBytes } from "@/utils/formatBytes";
 import "react-image-crop/dist/ReactCrop.css";
 
 const formatDisplayDate = (date: Date) => {
@@ -212,6 +213,7 @@ export default function PhotoEditor({ mode: pageMode, config: passedConfig }: Ph
   const [isRemovingBg, setIsRemovingBg] = useState(false);
   const [removeBgStage, setRemoveBgStage] = useState<"idle" | "optimizing" | "removing">("idle");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [originalSizeBytes, setOriginalSizeBytes] = useState<number | null>(null);
 
   const filteredPresets = useMemo(() => EXAM_PRESETS.filter((preset) => preset.category === category), [category]);
   const selectedExamCategory = selectedExam.category;
@@ -268,6 +270,7 @@ export default function PhotoEditor({ mode: pageMode, config: passedConfig }: Ph
     const file = acceptedFiles[0];
     if (!file) return;
 
+    setOriginalSizeBytes(file.size);
     const reader = new FileReader();
     reader.onload = () => {
       setImageSrc(reader.result as string);
@@ -895,6 +898,12 @@ export default function PhotoEditor({ mode: pageMode, config: passedConfig }: Ph
               <span>{activeMinKB} KB</span>
               <span>{activeMaxKB} KB</span>
             </div>
+            {/* Original file size */}
+            {originalSizeBytes && (
+              <div className="text-sm mt-2 text-slate-500 font-medium">
+                Original File Size: {formatBytes(originalSizeBytes)}
+              </div>
+            )}
           </div>
 
           {downloadUrl && (

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Focus } from "lucide-react";
 
 // ---------------------------------------------------------------------------
 // Navigation definition
@@ -167,36 +167,17 @@ export default function GlobalHeader() {
             Wordmark
         ---------------------------------------------------------------- */}
         <Link
+          className="group flex items-center gap-3 transition-opacity hover:opacity-90 outline-none focus-visible:ring-2 focus-visible:ring-brand-500 rounded-lg"
           href="/"
           aria-label="FormFoto — go to home"
-          className={[
-            "flex items-center gap-2 outline-none",
-            "focus-visible:ring-2 focus-visible:ring-[var(--ff-focus-color)] focus-visible:ring-offset-2 rounded-ff-sm",
-          ].join(" ")}
         >
-          {/* Camera-aperture SVG mark — inline, no external asset needed */}
-          <svg
-            aria-hidden="true"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="shrink-0"
-          >
-            <circle cx="12" cy="12" r="10" fill="#315CEA" opacity="0.12" />
-            <circle cx="12" cy="12" r="10" stroke="#315CEA" strokeWidth="1.5" />
-            <circle cx="12" cy="12" r="4.5" fill="#315CEA" />
-            <line x1="12" y1="2" x2="12" y2="6"  stroke="#315CEA" strokeWidth="1.5" strokeLinecap="round" />
-            <line x1="12" y1="18" x2="12" y2="22" stroke="#315CEA" strokeWidth="1.5" strokeLinecap="round" />
-            <line x1="2"  y1="12" x2="6"  y2="12" stroke="#315CEA" strokeWidth="1.5" strokeLinecap="round" />
-            <line x1="18" y1="12" x2="22" y2="12" stroke="#315CEA" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
-          <span
-            className="text-[15px] font-semibold tracking-tight text-ff-foreground"
-            style={{ fontFamily: "var(--ff-font-sans)" }}
-          >
-            FormFoto
+          {/* The Heavy App Mark - 40px box with 26px inner icon (65% fill ratio) */}
+          <div className="flex h-10 w-10 items-center justify-center rounded-[12px] bg-gradient-to-b from-brand-500 to-brand-600 text-white shadow-sm ring-1 ring-brand-700/20 transition-transform duration-[180ms] group-hover:scale-105">
+            <Focus className="h-[26px] w-[26px]" strokeWidth={2.5} />
+          </div>
+          {/* The Heavy Wordmark */}
+          <span className="text-[24px] font-extrabold tracking-tighter text-ff-foreground">
+            Form<span className="text-brand-600">Foto</span>
           </span>
         </Link>
 
