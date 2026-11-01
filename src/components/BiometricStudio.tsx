@@ -601,7 +601,7 @@ function CompliancePanel({
 
 interface BiometricStudioProps {
   config: VisaPassportConfig | any;
-  mode?: "passport" | "visa" | string;
+  mode?: "passport" | "visa";
 }
 
 export default function BiometricStudio({ config: incomingConfig, mode = "passport" }: BiometricStudioProps) {
@@ -1270,7 +1270,7 @@ export default function BiometricStudio({ config: incomingConfig, mode = "passpo
           {/* Compliance panel */}
           <CompliancePanel
             config={config}
-            mode={mode}
+            mode={mode as "passport" | "visa"}
             pixelWidth={pixelWidth}
             pixelHeight={pixelHeight}
             derivedFields={derivedFields}
